@@ -467,9 +467,6 @@ def chats():
                 'last_message_date': msg.date_envoi  # Store most recent message date
             }
         
-        # Update last message date if this message is more recent
-        if msg.date_envoi > direct_convs[other_user_id]['last_message_date']:
-            direct_convs[other_user_id]['last_message_date'] = msg.date_envoi
         
         if msg.expediteur_id != current_user.id and not msg.lu:
             direct_convs[other_user_id]['messages_non_lus'] += 1
@@ -599,7 +596,7 @@ def handle_send_message(data):
             room = str(reservation_id)
         elif direct_chat_id and destinataire_id:
             # Direct message - validate that user is authorized
-            destinataire_id = int(destinataire_id)
+            destinataire_id_int = int(destinataire_id)
             
             # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
             chat_ids = direct_chat_id.split('_')
@@ -607,7 +604,7 @@ def handle_send_message(data):
                 print("Format de chat direct invalide")
                 return
             
-            sorted_ids = sorted([user.id, destinataire_id])
+            sorted_ids = sorted([user.id, destinataire_id_int])
             expected_chat_id = f"{sorted_ids[0]}_{sorted_ids[1]}"
             
             if direct_chat_id != expected_chat_id:
@@ -617,7 +614,7 @@ def handle_send_message(data):
             message = Message(
                 reservation_id=None,
                 expediteur_id=user.id,
-                destinataire_id=destinataire_id,
+                destinataire_id=destinataire_id_int,
                 contenu=message_content,
                 lu=False
             )
