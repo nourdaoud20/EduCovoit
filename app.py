@@ -515,7 +515,7 @@ def direct_chat(user_id):
     ).order_by(Message.date_envoi).all()
     
     # Create the direct chat ID (sorted user IDs)
-    direct_chat_id = f"{min(current_user.id, user_id)}_{max(current_user.id, user_id)}"
+    direct_chat_id = create_direct_chat_id(current_user.id, user_id)
     
     return render_template('direct_chat.html',
                          autre_participant=autre_user,
@@ -535,6 +535,11 @@ def contact_driver(trajet_id):
     
     # Redirect to direct chat
     return redirect(url_for('direct_chat', user_id=driver.id))
+
+
+def create_direct_chat_id(user_id1, user_id2):
+    """Create a direct chat ID from two user IDs (sorted)"""
+    return f"{min(user_id1, user_id2)}_{max(user_id1, user_id2)}"
 
 @socketio.on('connect')
 def handle_connect():
@@ -624,8 +629,7 @@ def handle_send_message(data):
                 print("Utilisateur non autorisé pour ce chat")
                 return
             
-            sorted_ids = sorted([user.id, destinataire_id_int])
-            expected_chat_id = f"{sorted_ids[0]}_{sorted_ids[1]}"
+            expected_chat_id = create_direct_chat_id(user.id, destinataire_id_int)
             
             if direct_chat_id != expected_chat_id:
                 print("ID de chat direct invalide")
