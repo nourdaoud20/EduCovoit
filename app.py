@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from database import init_db
 from models import db, Utilisateur, Conducteur, Passager, Trajet, Reservation, Message
+from cities_data import get_cities, get_universities_by_city, validate_city_university
 from datetime import datetime, date
 import bcrypt
 
@@ -21,6 +22,21 @@ login_manager.login_view = 'connexion'
 @login_manager.user_loader
 def load_user(user_id):
     return Utilisateur.query.get(int(user_id))
+
+# ============================================
+# API ENDPOINTS FOR CITIES AND UNIVERSITIES
+# ============================================
+
+@app.route('/api/get_cities')
+def api_get_cities():
+    """Return list of all available cities"""
+    return jsonify({'cities': get_cities()})
+
+@app.route('/api/get_universities/<city>')
+def api_get_universities(city):
+    """Return universities for a given city"""
+    universities = get_universities_by_city(city)
+    return jsonify({'universities': universities})
 
 # ============================================
 # FONCTIONS UTILITAIRES
@@ -165,6 +181,11 @@ def publier_trajet():
         places = int(request.form['places'])
         prix = float(request.form['prix'])
         
+        # Validate city and university
+        if not validate_city_university(depart, arrivee):
+            flash('La destination sélectionnée n\'est pas disponible pour la ville de départ choisie', 'danger')
+            return redirect(url_for('publier_trajet'))
+        
         # Vérifier que la date n'est pas passée
         if date_trajet < get_current_date():
             flash('Impossible de publier un trajet avec une date passée', 'danger')
@@ -176,7 +197,8 @@ def publier_trajet():
         flash('Trajet publié avec succès !', 'success')
         return redirect(url_for('dashboard'))
     
-    return render_template('publier_trajet.html', today=get_current_date())
+    cities = get_cities()
+    return render_template('publier_trajet.html', today=get_current_date(), cities=cities)
 
 @app.route('/gestion_trajets')
 @login_required
@@ -196,13 +218,20 @@ def modifier_trajet(trajet_id):
     
     if request.method == 'POST':
         nouvelle_date = request.form['date']
+        depart = request.form['depart']
+        arrivee = request.form['arrivee']
+        
+        # Validate city and university
+        if not validate_city_university(depart, arrivee):
+            flash('La destination sélectionnée n\'est pas disponible pour la ville de départ choisie', 'danger')
+            return redirect(url_for('modifier_trajet', trajet_id=trajet_id))
         
         if nouvelle_date < get_current_date():
             flash('Impossible de modifier avec une date passée', 'danger')
             return redirect(url_for('modifier_trajet', trajet_id=trajet_id))
         
-        trajet.depart = request.form['depart']
-        trajet.arrivee = request.form['arrivee']
+        trajet.depart = depart
+        trajet.arrivee = arrivee
         trajet.date = nouvelle_date
         trajet.heure = request.form['heure']
         trajet.places_disponibles = int(request.form['places'])
@@ -211,7 +240,8 @@ def modifier_trajet(trajet_id):
         flash('Trajet modifié avec succès', 'success')
         return redirect(url_for('gestion_trajets'))
     
-    return render_template('modifier_trajet.html', trajet=trajet, today=get_current_date())
+    cities = get_cities()
+    return render_template('modifier_trajet.html', trajet=trajet, today=get_current_date(), cities=cities)
 
 @app.route('/supprimer_trajet/<int:trajet_id>')
 @login_required
@@ -235,17 +265,22 @@ def supprimer_trajet(trajet_id):
 def rechercher():
     trajets = []
     if request.method == 'POST':
-        depart = request.form['depart']
-        arrivee = request.form['arrivee']
-        date_recherche = request.form['date']
+        depart = request.form.get('depart', '').strip()
+        arrivee = request.form.get('arrivee', '').strip()
+        date_recherche = request.form.get('date', '').strip()
         
         if date_recherche < get_current_date():
             flash('Vous ne pouvez pas rechercher des trajets avec une date passée', 'warning')
         else:
-            passager = Passager.query.get(current_user.id)
-            trajets = passager.rechercher_trajet(depart, arrivee, date_recherche)
+            # Only search if both departure and arrival are provided
+            if depart and arrivee:
+                passager = Passager.query.get(current_user.id)
+                trajets = passager.rechercher_trajet(depart, arrivee, date_recherche)
+            else:
+                flash('Veuillez sélectionner une ville de départ et une destination', 'warning')
     
-    return render_template('rechercher.html', trajets=trajets, today=get_current_date())
+    cities = get_cities()
+    return render_template('rechercher.html', trajets=trajets, today=get_current_date(), cities=cities)
 
 @app.route('/reserver/<int:trajet_id>')
 @login_required

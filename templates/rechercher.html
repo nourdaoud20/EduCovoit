@@ -11,25 +11,32 @@
 </div>
 
 <!-- Search Form Card -->
-<div class="card fade-in mb-4" style="border-radius: 20px; overflow: hidden;">
+<div class="card fade-in mb-4" style="border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
     <div class="card-body p-4">
-        <form method="POST">
+        <form method="POST" id="searchForm">
             <div class="row">
                 <div class="col-md-3 mb-3">
-                    <label class="form-label"><i class="fas fa-map-marker-alt"></i> Départ</label>
-                    <input type="text" name="depart" placeholder="Ex: Tunis" class="form-control" required>
+                    <label class="form-label"><i class="fas fa-map-marker-alt"></i> Ville de départ</label>
+                    <select name="depart" id="departSelect" class="form-select form-select-search" required onchange="updateSearchArrival()">
+                        <option value="">-- Sélectionnez une ville --</option>
+                        {% for city in cities %}
+                        <option value="{{ city }}">{{ city }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label class="form-label"><i class="fas fa-map-pin"></i> Arrivée</label>
-                    <input type="text" name="arrivee" placeholder="Ex: Sousse" class="form-control" required>
+                    <label class="form-label"><i class="fas fa-map-pin"></i> Destination</label>
+                    <select name="arrivee" id="arrivalSelect" class="form-select form-select-search" required>
+                        <option value="">-- Sélectionnez une destination --</option>
+                    </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label class="form-label"><i class="far fa-calendar-alt"></i> Date</label>
-                    <input type="date" name="date" class="form-control" min="{{ today }}" required>
+                    <input type="date" name="date" class="form-control form-control-search" min="{{ today }}" required>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100" style="padding: 0.75rem;">
+                    <button type="submit" class="btn btn-primary w-100" style="padding: 0.75rem; border-radius: 12px; font-weight: 600;">
                         <i class="fas fa-search"></i> Rechercher
                     </button>
                 </div>
@@ -49,7 +56,7 @@
         <div class="row">
             {% for trajet in trajets %}
             <div class="col-md-6 mb-3 fade-in">
-                <div class="card h-100" style="border-radius: 20px; overflow: hidden;">
+                <div class="card h-100 trip-card" style="border-radius: 20px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); transition: all 0.3s ease;" data-price="{{ trajet.prix }}" data-time="{{ trajet.heure }}">
                     <div style="background: linear-gradient(135deg, rgba(0, 63, 135, 0.1), rgba(231, 10, 19, 0.1)); padding: 1.5rem;">
                         <!-- Trip Header -->
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -60,7 +67,7 @@
                                     {{ trajet.arrivee }}
                                 </h5>
                             </div>
-                            <span class="badge bg-success">
+                            <span class="badge bg-success" style="border-radius: 12px;">
                                 <i class="fas fa-chair"></i> {{ trajet.places_disponibles }}/{{ trajet.places_initiales }}
                             </span>
                         </div>
@@ -89,7 +96,7 @@
 
                         <!-- Driver Info -->
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                            <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem; border-radius: 50%; background: linear-gradient(135deg, #003F87, #0056b3); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
                                 {{ trajet.conducteur.nom[0] }}
                             </div>
                             <div>
@@ -103,7 +110,7 @@
                         </div>
 
                         <!-- Reserve Button -->
-                        <a href="{{ url_for('reserver', trajet_id=trajet.id) }}" class="btn btn-success w-100" style="border-radius: 12px; font-weight: 600;">
+                        <a href="{{ url_for('reserver', trajet_id=trajet.id) }}" class="btn btn-success w-100" style="border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
                             <i class="fas fa-check-circle"></i> Réserver maintenant
                         </a>
                     </div>
@@ -113,7 +120,7 @@
         </div>
     </div>
 {% elif request.method == 'POST' %}
-    <div class="alert alert-info alert-dismissible fade show" role="alert">
+    <div class="alert alert-info alert-dismissible fade show" role="alert" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);">
         <i class="fas fa-info-circle me-2"></i>
         <strong>Aucun trajet trouvé</strong> - Essayez une autre date ou destination
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -124,4 +131,68 @@
         <p style="color: #999; font-size: 1.1rem;">Utilisez le formulaire ci-dessus pour rechercher des trajets</p>
     </div>
 {% endif %}
+
+<script>
+async function updateSearchArrival() {
+    const departSelect = document.getElementById('departSelect');
+    const arrivalSelect = document.getElementById('arrivalSelect');
+    const selectedCity = departSelect.value;
+    
+    if (!selectedCity) {
+        arrivalSelect.innerHTML = '<option value="">-- Sélectionnez une destination --</option>';
+        arrivalSelect.disabled = true;
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/get_universities/${encodeURIComponent(selectedCity)}`);
+        const data = await response.json();
+        
+        // Build options from universities
+        let html = '<option value="">-- Sélectionnez une destination --</option>';
+        if (data.universities && data.universities.length > 0) {
+            data.universities.forEach(univ => {
+                html += `<option value="${univ}">${univ}</option>`;
+            });
+        }
+        
+        arrivalSelect.innerHTML = html;
+        arrivalSelect.disabled = false;
+    } catch (error) {
+        console.error('Error fetching universities:', error);
+        arrivalSelect.innerHTML = '<option value="">Erreur lors du chargement</option>';
+        arrivalSelect.disabled = true;
+    }
+}
+</script>
+
+<style>
+.form-select-search,
+.form-control-search {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-select-search:focus,
+.form-control-search:focus {
+    border-color: #003F87;
+    box-shadow: 0 0 0 0.2rem rgba(0, 63, 135, 0.15);
+}
+
+.form-select-search:hover,
+.form-control-search:hover {
+    border-color: #003F87;
+}
+
+.trip-card {
+    cursor: pointer;
+}
+
+.trip-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
 {% endblock %}

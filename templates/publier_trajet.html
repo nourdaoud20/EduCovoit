@@ -3,42 +3,50 @@
 {% block content %}
 <div class="row justify-content-center fade-in">
     <div class="col-md-6 col-lg-5">
-        <div class="card" style="border-radius: 20px; overflow: hidden;">
+        <div class="card" style="border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
             <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 2rem; text-align: center; color: white;">
                 <i class="fas fa-plus-circle" style="font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i>
                 <h3 style="color: white; margin-bottom: 0;">Publier un trajet</h3>
+                <p style="margin-top: 0.5rem; opacity: 0.9;">Sélectionnez votre itinéraire</p>
             </div>
             <div class="card-body" style="padding: 2rem;">
-                <form method="POST">
+                <form method="POST" id="publishForm">
                     <div class="mb-3">
-                        <label class="form-label"><i class="fas fa-location-dot"></i> Départ</label>
-                        <input type="text" name="depart" class="form-control" placeholder="Ex: Tunis, Ariana, Nabeul..." required>
+                        <label class="form-label"><i class="fas fa-location-dot"></i> Ville de départ</label>
+                        <select name="depart" id="departSelect" class="form-select form-select-modern" required onchange="updateArrivalOptions()">
+                            <option value="">-- Sélectionnez une ville --</option>
+                            {% for city in cities %}
+                            <option value="{{ city }}">{{ city }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label"><i class="fas fa-map-pin"></i> Arrivée</label>
-                        <input type="text" name="arrivee" class="form-control" placeholder="Ex: Université El Manar, ESPRIT..." required>
+                        <label class="form-label"><i class="fas fa-map-pin"></i> Destination (Université)</label>
+                        <select name="arrivee" id="arrivalSelect" class="form-select form-select-modern" required>
+                            <option value="">-- D'abord, sélectionnez une ville --</option>
+                        </select>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><i class="far fa-calendar-alt"></i> Date</label>
-                            <input type="date" name="date" class="form-control" min="{{ today }}" required>
+                            <input type="date" name="date" class="form-control form-control-modern" min="{{ today }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><i class="far fa-clock"></i> Heure</label>
-                            <input type="time" name="heure" class="form-control" required>
+                            <input type="time" name="heure" class="form-control form-control-modern" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><i class="fas fa-users"></i> Places</label>
-                            <input type="number" name="places" min="1" max="4" class="form-control" required>
+                            <input type="number" name="places" min="1" max="4" class="form-control form-control-modern" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><i class="fas fa-money-bill-wave"></i> Prix (TND)</label>
-                            <input type="number" name="prix" step="0.5" min="0" class="form-control" required>
+                            <input type="number" name="prix" step="0.5" min="0" class="form-control form-control-modern" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 btn-lg" style="font-weight: 600; margin-top: 1rem;">
+                    <button type="submit" class="btn btn-primary w-100 btn-lg" style="font-weight: 600; margin-top: 1rem; border-radius: 12px;">
                         <i class="fas fa-check-circle"></i> Publier le trajet
                     </button>
                 </form>
@@ -46,4 +54,60 @@
         </div>
     </div>
 </div>
+
+<script>
+async function updateArrivalOptions() {
+    const departSelect = document.getElementById('departSelect');
+    const arrivalSelect = document.getElementById('arrivalSelect');
+    const selectedCity = departSelect.value;
+    
+    if (!selectedCity) {
+        arrivalSelect.innerHTML = '<option value="">-- D\'abord, sélectionnez une ville --</option>';
+        arrivalSelect.disabled = true;
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/get_universities/${encodeURIComponent(selectedCity)}`);
+        const data = await response.json();
+        
+        // Build options from universities
+        let html = '<option value="">-- Sélectionnez une destination --</option>';
+        if (data.universities && data.universities.length > 0) {
+            data.universities.forEach(univ => {
+                html += `<option value="${univ}">${univ}</option>`;
+            });
+        }
+        
+        arrivalSelect.innerHTML = html;
+        arrivalSelect.disabled = false;
+    } catch (error) {
+        console.error('Error fetching universities:', error);
+        arrivalSelect.innerHTML = '<option value="">Erreur lors du chargement</option>';
+        arrivalSelect.disabled = true;
+    }
+}
+</script>
+
+<style>
+.form-select-modern,
+.form-control-modern {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-select-modern:focus,
+.form-control-modern:focus {
+    border-color: #003F87;
+    box-shadow: 0 0 0 0.2rem rgba(0, 63, 135, 0.15);
+}
+
+.form-select-modern:hover,
+.form-control-modern:hover {
+    border-color: #003F87;
+}
+</style>
 {% endblock %}
