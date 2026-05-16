@@ -403,8 +403,6 @@ def chat(reservation_id):
                          messages=messages,
                          autre_participant=autre_participant)
 
-@socketio.on('connect')
-
 @app.route('/chats')
 @login_required
 def chats():
@@ -470,7 +468,7 @@ def chats():
             }
         
         # Update last message date if this message is more recent
-        if msg.date_envoi > direct_convs[other_user_id].get('last_message_date', datetime.min):
+        if msg.date_envoi > direct_convs[other_user_id]['last_message_date']:
             direct_convs[other_user_id]['last_message_date'] = msg.date_envoi
         
         if msg.expediteur_id != current_user.id and not msg.lu:
@@ -478,8 +476,14 @@ def chats():
     
     conversations.extend(direct_convs.values())
     
-    # Sort by most recent message
-    conversations.sort(key=lambda x: x.get('last_message_date') or x.get('reservation').date_reservation if x.get('reservation') else datetime.min, reverse=True)
+    # Sort by most recent message - direct chats by last_message_date, reservation chats by reservation date
+    def get_sort_date(conv):
+        if conv.get('type') == 'direct':
+            return conv.get('last_message_date', datetime.min)
+        else:
+            return conv.get('reservation').date_reservation if conv.get('reservation') else datetime.min
+    
+    conversations.sort(key=get_sort_date, reverse=True)
     
     return render_template('chats.html', conversations=conversations)
 
@@ -603,10 +607,10 @@ def handle_send_message(data):
                 print("Format de chat direct invalide")
                 return
             
-            sorted_ids = sorted([int(user_id), destinataire_id])
+            sorted_ids = sorted([user.id, destinataire_id])
             expected_chat_id = f"{sorted_ids[0]}_{sorted_ids[1]}"
             
-            if str(direct_chat_id) != expected_chat_id:
+            if direct_chat_id != expected_chat_id:
                 print("ID de chat direct invalide")
                 return
             
