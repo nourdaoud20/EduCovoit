@@ -164,18 +164,6 @@ async function updateSearchArrival() {
         arrivalSelect.disabled = true;
     }
 }
-
-// Add hover effect to trip cards
-document.querySelectorAll('.trip-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-4px)';
-        this.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
-    });
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0)';
-        this.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.08)';
-    });
-});
 </script>
 
 <style>
