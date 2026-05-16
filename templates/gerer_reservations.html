@@ -1,26 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 class="text-primary fade-in"><i class="fas fa-calendar-check"></i> Demandes de réservation</h2>
-
-{% if demandes %}
-    <div class="row">
-        {% for demande in demandes %}
-        <div class="col-md-6 mb-3 fade-in">
-            <div class="card">
-                <div class="card-body">
-                    <h5>{{ demande.trajet.depart }} → {{ demande.trajet.arrivee }}</h5>
-                    <p>📅 {{ demande.trajet.date }} à {{ demande.trajet.heure }}</p>
-                    <p>👤 Passager: {{ demande.passager.nom }}</p>
-                    <p>📞 Tél: {{ demande.passager.telephone }}</p>
-                    <a href="{{ url_for('accepter_reservation', reservation_id=demande.id) }}" class="btn btn-success"><i class="fas fa-check"></i> Accepter</a>
-                    <a href="{{ url_for('refuser_reservation', reservation_id=demande.id) }}" class="btn btn-danger"><i class="fas fa-times"></i> Refuser</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+<!-- Hero Section -->
+<div class="hero-section fade-in text-center" style="margin-bottom: 2rem;">
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-calendar-check" style="font-size: 4rem; margin-bottom: 1rem; display: block;"></i>
+        <h1>Demandes de réservation</h1>
+        <p>Gérez les demandes de vos passagers</p>
     </div>
-{% else %}
-    <div class="alert alert-info">Aucune demande en attente.</div>
-{% endif %}
+</div>
+
+<div class="row fade-in">
+    <div class="col-md-12">
+        {% if demandes %}
+            <div class="row">
+                {% for demande in demandes %}
+                <div class="col-md-6 mb-3">
+                    <div class="card" style="border-radius: 20px; overflow: hidden; border-left: 4px solid #ffc107;">
+                        <div class="card-body p-4">
+                            <h5 style="color: #003F87; margin-bottom: 1rem;">
+                                <i class="fas fa-map-marker-alt"></i> {{ demande.trajet.depart }} <span style="color: #E70A13;">→</span> {{ demande.trajet.arrivee }}
+                            </h5>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                                <div class="row">
+                                    <div class="col-6 mb-2">
+                                        <small style="color: #999;"><i class="far fa-calendar-alt"></i> Date</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ demande.trajet.date }}</p>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <small style="color: #999;"><i class="far fa-clock"></i> Heure</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ demande.trajet.heure }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Passenger Info -->
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                                    {{ demande.passager.nom[0] }}
+                                </div>
+                                <div>
+                                    <p style="margin: 0; font-weight: 600; color: #003F87;">
+                                        <i class="fas fa-user"></i> {{ demande.passager.nom }}
+                                    </p>
+                                    <small style="color: #999;">
+                                        <i class="fas fa-phone"></i> {{ demande.passager.telephone }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('accepter_reservation', reservation_id=demande.id) }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check-circle"></i> Accepter
+                                </a>
+                                <a href="{{ url_for('refuser_reservation', reservation_id=demande.id) }}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-times-circle"></i> Refuser
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="border-radius: 20px; text-align: center; padding: 4rem 1rem;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem; display: block;"></i>
+                <h4 style="color: #999;">Aucune demande en attente</h4>
+                <p style="color: #999;">Vous êtes à jour ! Les demandes apparaîtront ici.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -1,31 +1,92 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 class="text-primary fade-in"><i class="fas fa-cog"></i> Gérer mes trajets</h2>
-
-{% if trajets %}
-    <div class="row">
-        {% for trajet in trajets %}
-        <div class="col-md-6 mb-3 fade-in">
-            <div class="card">
-                <div class="card-body">
-                    <h5>{{ trajet.depart }} → {{ trajet.arrivee }}</h5>
-                    <p>📅 {{ trajet.date }} à {{ trajet.heure }}</p>
-                    <p>💰 {{ trajet.prix }} TND | 💺 {{ trajet.places_disponibles }}/{{ trajet.places_initiales }}</p>
-                    {% if trajet.date >= today %}
-                        <a href="{{ url_for('modifier_trajet', trajet_id=trajet.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i> Modifier</a>
-                        <a href="{{ url_for('supprimer_trajet', trajet_id=trajet.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ce trajet ?')"><i class="fas fa-trash"></i> Supprimer</a>
-                    {% else %}
-                        <span class="badge bg-secondary">Trajet passé</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+<!-- Hero Section -->
+<div class="hero-section fade-in text-center" style="margin-bottom: 2rem;">
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-cog" style="font-size: 4rem; margin-bottom: 1rem; display: block;"></i>
+        <h1>Gérer mes trajets</h1>
+        <p>Modifiez ou supprimez vos trajets publiés</p>
     </div>
-{% else %}
-    <div class="alert alert-info">Aucun trajet publié.</div>
-{% endif %}
+</div>
 
-<a href="{{ url_for('publier_trajet') }}" class="btn btn-primary mt-3"><i class="fas fa-plus-circle"></i> Publier un trajet</a>
+<div class="row fade-in">
+    <div class="col-md-12 mb-4">
+        <a href="{{ url_for('publier_trajet') }}" class="btn btn-success btn-lg">
+            <i class="fas fa-plus-circle"></i> Publier un nouveau trajet
+        </a>
+    </div>
+</div>
+
+<div class="row fade-in">
+    <div class="col-md-12">
+        {% if trajets %}
+            <div class="row">
+                {% for trajet in trajets %}
+                <div class="col-md-6 mb-3">
+                    <div class="card" style="border-radius: 20px; overflow: hidden; border-left: 4px solid {% if trajet.date >= today %}#28a745{% else %}#999{% endif %};">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 style="color: #003F87; margin: 0;">
+                                    {{ trajet.depart }} <span style="color: #E70A13;">→</span> {{ trajet.arrivee }}
+                                </h5>
+                                {% if trajet.date >= today %}
+                                    <span class="badge bg-success"><i class="fas fa-circle"></i> Actif</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-circle"></i> Passé</span>
+                                {% endif %}
+                            </div>
+
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; margin: 1rem 0;">
+                                <div class="row">
+                                    <div class="col-6 mb-2">
+                                        <small style="color: #999;"><i class="far fa-calendar-alt"></i> Date</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ trajet.date }}</p>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <small style="color: #999;"><i class="far fa-clock"></i> Heure</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ trajet.heure }}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small style="color: #999;"><i class="fas fa-money-bill-wave"></i> Prix</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ trajet.prix }} TND</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small style="color: #999;"><i class="fas fa-chair"></i> Places</small>
+                                        <p style="margin: 0; font-weight: 600;">{{ trajet.places_disponibles }}/{{ trajet.places_initiales }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if trajet.date >= today %}
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('modifier_trajet', trajet_id=trajet.id) }}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </a>
+                                    <a href="{{ url_for('supprimer_trajet', trajet_id=trajet.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce trajet ?')">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info" style="margin: 0; border-radius: 12px; border: none;">
+                                    <small><i class="fas fa-info-circle"></i> Ce trajet est passé et ne peut pas être modifié</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="border-radius: 20px; text-align: center; padding: 4rem 1rem;">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+                <h4 style="color: #999;">Aucun trajet publié</h4>
+                <p style="color: #999; margin-bottom: 1.5rem;">Commencez par publier votre premier trajet</p>
+                <a href="{{ url_for('publier_trajet') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Publier un trajet
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
