@@ -13,10 +13,12 @@ def migrate_messages_table(db_path):
     so destinataire_id is added as an INTEGER column referencing utilisateurs.id.
     The foreign key constraint is defined in the SQLAlchemy model (models.py)
     for ORM-level enforcement.
+    
+    Returns:
+        bool: True if migration succeeded or wasn't needed, False on error
     """
     try:
-        conn = sqlite3.connect(db_path)
-        try:
+        with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
             
             # Check if destinataire_id column exists
@@ -34,11 +36,8 @@ def migrate_messages_table(db_path):
                 """)
                 
                 print("✅ Added destinataire_id column to messages table")
-                conn.commit()
             else:
                 print("✅ destinataire_id column already exists")
-        finally:
-            conn.close()
         
         return True
         
@@ -51,7 +50,15 @@ def migrate_messages_table(db_path):
 
 
 def run_all_migrations(db_path):
-    """Run all pending migrations on the database."""
+    """
+    Run all pending migrations on the database.
+    
+    Args:
+        db_path (str): Path to the SQLite database file
+        
+    Returns:
+        bool: True if all migrations succeeded, False if any failed
+    """
     print("🔄 Running database migrations...")
     
     # Ensure database file exists
@@ -61,7 +68,8 @@ def run_all_migrations(db_path):
     
     # Run migrations
     if not migrate_messages_table(db_path):
-        print("⚠️  Migration encountered issues but continuing...")
+        print("⚠️  Migration failed - some features may not work correctly")
+        return False
     
-    print("✅ Migrations completed")
+    print("✅ Migrations completed successfully")
     return True
