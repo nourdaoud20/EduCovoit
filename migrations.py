@@ -8,9 +8,15 @@ def migrate_messages_table(db_path):
     """
     Migrate messages table to add destinataire_id column if it doesn't exist.
     This supports direct messaging between users.
+    
+    Note: SQLite does not support adding foreign key constraints via ALTER TABLE,
+    so destinataire_id is added as an INTEGER column referencing utilisateurs.id.
+    The foreign key constraint is defined in the SQLAlchemy model (models.py)
+    for ORM-level enforcement.
     """
     try:
-        with sqlite3.connect(db_path) as conn:
+        conn = sqlite3.connect(db_path)
+        try:
             cursor = conn.cursor()
             
             # Check if destinataire_id column exists
@@ -21,7 +27,7 @@ def migrate_messages_table(db_path):
             if 'destinataire_id' not in column_names:
                 print("🔧 Migrating messages table: adding destinataire_id column...")
                 
-                # Add the missing column (should reference utilisateurs.id for direct messages)
+                # Add the missing column for direct messages (references utilisateurs.id)
                 cursor.execute("""
                     ALTER TABLE messages 
                     ADD COLUMN destinataire_id INTEGER
@@ -31,6 +37,8 @@ def migrate_messages_table(db_path):
                 conn.commit()
             else:
                 print("✅ destinataire_id column already exists")
+        finally:
+            conn.close()
         
         return True
         
