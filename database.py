@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from models import db
 from migrations import run_all_migrations
 from pathlib import Path
-import os
 
 def init_db(app):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///covoiturage.db'
