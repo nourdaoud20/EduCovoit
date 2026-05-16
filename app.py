@@ -514,9 +514,13 @@ def direct_chat(user_id):
         )
     ).order_by(Message.date_envoi).all()
     
+    # Create the direct chat ID (sorted user IDs)
+    direct_chat_id = f"{min(current_user.id, user_id)}_{max(current_user.id, user_id)}"
+    
     return render_template('direct_chat.html',
                          autre_participant=autre_user,
-                         messages=messages)
+                         messages=messages,
+                         direct_chat_id=direct_chat_id)
 
 @app.route('/contact_driver/<int:trajet_id>')
 @login_required
@@ -596,9 +600,6 @@ def handle_send_message(data):
             room = str(reservation_id)
         elif direct_chat_id and destinataire_id:
             # Direct message - validate that user is authorized
-            if not destinataire_id:
-                print("destinataire_id manquant")
-                return
             
             try:
                 destinataire_id_int = int(destinataire_id)

@@ -57,7 +57,7 @@
 
 <script>
     var socket = io();
-    var directChatId = {{ [current_user.id, autre_participant.id]|sort|join('_')|tojson }};
+    var directChatId = {{ direct_chat_id|tojson }};
     var currentUserId = {{ current_user.id }};
     var destinataireId = {{ autre_participant.id }};
     
