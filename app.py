@@ -538,7 +538,18 @@ def contact_driver(trajet_id):
 
 
 def create_direct_chat_id(user_id1, user_id2):
-    """Create a direct chat ID from two user IDs (sorted)"""
+    """Create a direct chat ID from two user IDs (sorted).
+    
+    IDs are sorted to ensure consistent room identifiers regardless of
+    which user initiates the conversation.
+    
+    Args:
+        user_id1: First user ID
+        user_id2: Second user ID
+        
+    Returns:
+        String in format 'min_id_max_id' (e.g., '1_42')
+    """
     return f"{min(user_id1, user_id2)}_{max(user_id1, user_id2)}"
 
 @socketio.on('connect')
@@ -615,7 +626,7 @@ def handle_send_message(data):
             # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
             chat_ids = direct_chat_id.split('_')
             if len(chat_ids) != 2:
-                print("Format de chat direct invalide")
+                print("Format de chat direct invalide (attendu: user_id1_user_id2)")
                 return
             
             # Parse chat IDs and verify user is a participant
