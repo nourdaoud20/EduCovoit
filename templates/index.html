@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section fade-in text-center">
+    <i class="fas fa-car-side" style="font-size: 80px;"></i>
+    <h1 class="mt-3">Bienvenue sur EduCovoit Tunisie</h1>
+    <p>La plateforme de covoiturage dédiée aux étudiants tunisiens 🇹🇳</p>
+    <p>Économisez sur vos trajets, réduisez votre empreinte carbone et créez du lien social !</p>
+    <div class="mt-3"><a href="{{ url_for('inscription') }}" class="btn btn-primary btn-lg me-2"><i class="fas fa-user-plus"></i> S'inscrire</a><a href="{{ url_for('connexion') }}" class="btn btn-outline-light btn-lg"><i class="fas fa-sign-in-alt"></i> Se connecter</a></div>
+</div>
+<div class="row mt-5 text-center">
+    <div class="col-md-4"><div class="card p-3"><i class="fas fa-money-bill-wave" style="font-size: 40px; color: #003F87;"></i><h4>Économies</h4><p>Réduisez vos dépenses de transport jusqu'à 50%</p></div></div>
+    <div class="col-md-4"><div class="card p-3"><i class="fas fa-leaf" style="font-size: 40px; color: #003F87;"></i><h4>Écologique</h4><p>Moins de voitures = moins de CO₂</p></div></div>
+    <div class="col-md-4"><div class="card p-3"><i class="fas fa-users" style="font-size: 40px; color: #003F87;"></i><h4>Social</h4><p>Rencontrez d'autres étudiants</p></div></div>
+</div>
+{% endblock %}

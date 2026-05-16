@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-primary fade-in"><i class="fas fa-cog"></i> Gérer mes trajets</h2>
+
+{% if trajets %}
+    <div class="row">
+        {% for trajet in trajets %}
+        <div class="col-md-6 mb-3 fade-in">
+            <div class="card">
+                <div class="card-body">
+                    <h5>{{ trajet.depart }} → {{ trajet.arrivee }}</h5>
+                    <p>📅 {{ trajet.date }} à {{ trajet.heure }}</p>
+                    <p>💰 {{ trajet.prix }} TND | 💺 {{ trajet.places_disponibles }}/{{ trajet.places_initiales }}</p>
+                    {% if trajet.date >= today %}
+                        <a href="{{ url_for('modifier_trajet', trajet_id=trajet.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i> Modifier</a>
+                        <a href="{{ url_for('supprimer_trajet', trajet_id=trajet.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ce trajet ?')"><i class="fas fa-trash"></i> Supprimer</a>
+                    {% else %}
+                        <span class="badge bg-secondary">Trajet passé</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">Aucun trajet publié.</div>
+{% endif %}
+
+<a href="{{ url_for('publier_trajet') }}" class="btn btn-primary mt-3"><i class="fas fa-plus-circle"></i> Publier un trajet</a>
+{% endblock %}

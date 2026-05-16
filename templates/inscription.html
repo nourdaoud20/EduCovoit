@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-user-plus"></i> Inscription</h4></div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3"><label class="form-label">Nom complet</label><input type="text" name="nom" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Email universitaire</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Téléphone</label><input type="tel" name="telephone" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" name="mot_de_passe" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Je suis</label><select name="type_utilisateur" class="form-control"><option value="passager">Passager</option><option value="conducteur">Conducteur</option></select></div>
+                    <button type="submit" class="btn btn-primary w-100">S'inscrire</button>
+                </form>
+                <p class="mt-3 text-center">Déjà inscrit ? <a href="{{ url_for('connexion') }}">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

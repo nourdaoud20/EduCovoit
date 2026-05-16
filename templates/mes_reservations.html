@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-primary fade-in"><i class="fas fa-list"></i> Mes réservations</h2>
+
+{% if reservations %}
+    <div class="row">
+        {% for res in reservations %}
+        <div class="col-md-6 mb-3 fade-in">
+            <div class="card">
+                <div class="card-body">
+                    <h5>{{ res.trajet.depart }} → {{ res.trajet.arrivee }}</h5>
+                    <p><i class="far fa-calendar-alt"></i> {{ res.trajet.date }} à {{ res.trajet.heure }}</p>
+                    <p><i class="fas fa-user"></i> Conducteur: {{ res.trajet.conducteur.nom }}</p>
+                    <p><i class="fas fa-star text-warning"></i> Note: {{ res.trajet.conducteur.note_moyenne|round(1) }}/5</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Prix: {{ res.trajet.prix }} TND</p>
+                    <p>Statut: 
+                        {% if res.statut == 'en_attente' %}<span class="badge bg-warning">⏳ En attente</span>
+                        {% elif res.statut == 'confirmee' %}<span class="badge bg-success">✅ Confirmée</span>
+                        {% elif res.statut == 'annulee' %}<span class="badge bg-danger">❌ Annulée</span>
+                        {% elif res.statut == 'terminee' %}<span class="badge bg-secondary">🏁 Terminée</span>{% endif %}
+                    </p>
+                    {% if res.statut == 'en_attente' %}
+                        <a href="{{ url_for('annuler_reservation', reservation_id=res.id) }}" class="btn btn-danger btn-sm mt-2" onclick="return confirm('Annuler cette réservation ?')"><i class="fas fa-times"></i> Annuler</a>
+                    {% endif %}
+                    {% if res.statut == 'confirmee' %}
+                        <a href="{{ url_for('chat', reservation_id=res.id) }}" class="btn btn-primary btn-sm mt-2"><i class="fas fa-comments"></i> 💬 Chat</a>
+                    {% endif %}
+                    {% if res.statut == 'confirmee' and res.trajet.date < now|string %}
+                        <a href="{{ url_for('noter', reservation_id=res.id, type_note='conducteur') }}" class="btn btn-warning btn-sm mt-2"><i class="fas fa-star"></i> ⭐ Noter</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info"><i class="fas fa-info-circle"></i> Vous n'avez aucune réservation.</div>
+{% endif %}
+
+<a href="{{ url_for('rechercher') }}" class="btn btn-success mt-3"><i class="fas fa-search"></i> Rechercher un trajet</a>
+{% endblock %}

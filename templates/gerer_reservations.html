@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-primary fade-in"><i class="fas fa-calendar-check"></i> Demandes de réservation</h2>
+
+{% if demandes %}
+    <div class="row">
+        {% for demande in demandes %}
+        <div class="col-md-6 mb-3 fade-in">
+            <div class="card">
+                <div class="card-body">
+                    <h5>{{ demande.trajet.depart }} → {{ demande.trajet.arrivee }}</h5>
+                    <p>📅 {{ demande.trajet.date }} à {{ demande.trajet.heure }}</p>
+                    <p>👤 Passager: {{ demande.passager.nom }}</p>
+                    <p>📞 Tél: {{ demande.passager.telephone }}</p>
+                    <a href="{{ url_for('accepter_reservation', reservation_id=demande.id) }}" class="btn btn-success"><i class="fas fa-check"></i> Accepter</a>
+                    <a href="{{ url_for('refuser_reservation', reservation_id=demande.id) }}" class="btn btn-danger"><i class="fas fa-times"></i> Refuser</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">Aucune demande en attente.</div>
+{% endif %}
+{% endblock %}

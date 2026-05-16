@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-star"></i> Noter {{ cible.nom }}</h4></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('soumettre_note', reservation_id=reservation.id, type_note=type_note) }}">
+                    <div class="mb-3 text-center">
+                        <label class="form-label fw-bold">Votre note (1 à 5)</label>
+                        <div class="rating">
+                            {% for i in range(1, 6) %}<input type="radio" name="note" value="{{ i }}" id="star{{ i }}" required><label for="star{{ i }}" style="font-size: 30px; cursor: pointer;">★</label>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Commentaire (optionnel)</label><textarea name="commentaire" class="form-control" rows="3" placeholder="Partagez votre expérience..."></textarea></div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-star"></i> Envoyer la note</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .rating { direction: rtl; unicode-bidi: bidi-override; }
+    .rating input { display: none; }
+    .rating label:hover, .rating label:hover ~ label, .rating input:checked ~ label { color: #ffc107; }
+    .rating label { color: #ddd; }
+</style>
+{% endblock %}

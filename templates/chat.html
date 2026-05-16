@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-comments"></i> Chat avec <strong>{{ autre_participant.nom }}</strong>
+                    <small class="text-white-50 d-block">{{ reservation.trajet.depart }} → {{ reservation.trajet.arrivee }} | {{ reservation.trajet.date }} à {{ reservation.trajet.heure }}</small>
+                </h5>
+            </div>
+            <div id="chatMessages" class="chat-container">
+                {% for msg in messages %}
+                <div class="d-flex mb-2 {% if msg.expediteur_id == current_user.id %}justify-content-end{% endif %}">
+                    <div class="message-bubble {% if msg.expediteur_id == current_user.id %}message-mine{% else %}message-other{% endif %}">
+                        <small><strong>{{ msg.expediteur.nom }}</strong> • {{ msg.date_envoi.strftime('%H:%M') }}</small>
+                        <p class="mb-0">{{ msg.contenu }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input type="text" id="messageInput" class="form-control" placeholder="Écrivez votre message..." maxlength="500">
+                    <button class="btn btn-primary" id="sendBtn"><i class="fas fa-paper-plane"></i> Envoyer</button>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 text-center"><a href="{{ url_for('dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Retour</a></div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    var socket = io();
+    var reservationId = {{ reservation.id }};
+    var currentUserId = {{ current_user.id }};
+    
+    var chatMessages = document.getElementById('chatMessages');
+    function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+    scrollToBottom();
+    
+    socket.on('connect', function() { console.log('✅ Socket connecté'); socket.emit('join_chat', { reservation_id: reservationId }); });
+    socket.on('new_message', function(data) {
+        var isMe = (data.expedienteur_id === currentUserId);
+        var msgDiv = document.createElement('div');
+        msgDiv.className = 'd-flex mb-2 ' + (isMe ? 'justify-content-end' : 'justify-content-start');
+        msgDiv.innerHTML = `<div class="message-bubble ${isMe ? 'message-mine' : 'message-other'}"><small><strong>${escapeHtml(data.expediteur_nom)}</strong> • ${data.date_envoi}</small><p class="mb-0">${escapeHtml(data.contenu)}</p></div>`;
+        chatMessages.appendChild(msgDiv);
+        scrollToBottom();
+    });
+    
+    function sendMessage() {
+        var message = document.getElementById('messageInput').value.trim();
+        if (message === '') return;
+        socket.emit('send_message', { reservation_id: reservationId, message: message, user_id: currentUserId });
+        document.getElementById('messageInput').value = '';
+    }
+    document.getElementById('sendBtn').onclick = sendMessage;
+    document.getElementById('messageInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
+    function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+    window.onbeforeunload = function() { socket.emit('leave_chat', { reservation_id: reservationId }); };
+</script>
+{% endblock %}
