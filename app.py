@@ -183,7 +183,7 @@ def publier_trajet():
         
         # Validate city and university
         if not validate_city_university(depart, arrivee):
-            flash('Combinaison ville/destination invalide', 'danger')
+            flash('La destination sélectionnée n\'est pas disponible pour la ville de départ choisie', 'danger')
             return redirect(url_for('publier_trajet'))
         
         # Vérifier que la date n'est pas passée
@@ -223,7 +223,7 @@ def modifier_trajet(trajet_id):
         
         # Validate city and university
         if not validate_city_university(depart, arrivee):
-            flash('Combinaison ville/destination invalide', 'danger')
+            flash('La destination sélectionnée n\'est pas disponible pour la ville de départ choisie', 'danger')
             return redirect(url_for('modifier_trajet', trajet_id=trajet_id))
         
         if nouvelle_date < get_current_date():
