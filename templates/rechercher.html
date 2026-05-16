@@ -110,9 +110,14 @@
                         </div>
 
                         <!-- Reserve Button -->
-                        <a href="{{ url_for('reserver', trajet_id=trajet.id) }}" class="btn btn-success w-100" style="border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
-                            <i class="fas fa-check-circle"></i> Réserver maintenant
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('reserver', trajet_id=trajet.id) }}" class="btn btn-success flex-grow-1" style="border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
+                                <i class="fas fa-check-circle"></i> Réserver maintenant
+                            </a>
+                            <a href="{{ url_for('contact_driver', trajet_id=trajet.id) }}" class="btn btn-info" style="border-radius: 12px; font-weight: 600; transition: all 0.3s ease;" title="Contacter le conducteur">
+                                <i class="fas fa-comment"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

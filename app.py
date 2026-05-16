@@ -392,7 +392,7 @@ def chat(reservation_id):
     Message.query.filter_by(
         reservation_id=reservation_id, 
         lu=False
-    ).filter(Message.expediteur_id != current_user.id).update({'lu': True})
+    ).filter(Message.expediteur_id != current_user.id).update({'lu': True}, synchronize_session='fetch')
     db.session.commit()
     
     messages = Message.query.filter_by(reservation_id=reservation_id).order_by(Message.date_envoi).all()
@@ -402,6 +402,155 @@ def chat(reservation_id):
                          reservation=reservation, 
                          messages=messages,
                          autre_participant=autre_participant)
+
+@app.route('/chats')
+@login_required
+def chats():
+    """Page listing all conversations for the current user"""
+    conversations = []
+    
+    # Get reservation-based chats
+    if current_user.type_utilisateur == 'conducteur':
+        trajets = Trajet.query.filter_by(conducteur_id=current_user.id).all()
+        for trajet in trajets:
+            for res in trajet.reservations:
+                if res.statut == 'confirmee':
+                    messages_non_lus = Message.query.filter_by(
+                        reservation_id=res.id, 
+                        lu=False
+                    ).filter(Message.expediteur_id != current_user.id).count()
+                    conversations.append({
+                        'type': 'reservation',
+                        'id': res.id,
+                        'reservation': res,
+                        'autre_participant': res.passager,
+                        'messages_non_lus': messages_non_lus,
+                        'trajet': trajet
+                    })
+    else:  # passager
+        reservations = Reservation.query.filter_by(passager_id=current_user.id).filter(
+            Reservation.statut == 'confirmee'
+        ).all()
+        for res in reservations:
+            messages_non_lus = Message.query.filter_by(
+                reservation_id=res.id, 
+                lu=False
+            ).filter(Message.expediteur_id != current_user.id).count()
+            conversations.append({
+                'type': 'reservation',
+                'id': res.id,
+                'reservation': res,
+                'autre_participant': res.trajet.conducteur,
+                'messages_non_lus': messages_non_lus,
+                'trajet': res.trajet
+            })
+    
+    # Get direct message conversations
+    direct_messages = Message.query.filter(
+        db.or_(
+            Message.expediteur_id == current_user.id,
+            Message.destinataire_id == current_user.id
+        ),
+        Message.reservation_id.is_(None)
+    ).order_by(Message.date_envoi.desc()).all()
+    
+    direct_convs = {}
+    for msg in direct_messages:
+        other_user_id = msg.destinataire_id if msg.expediteur_id == current_user.id else msg.expediteur_id
+        if other_user_id not in direct_convs:
+            other_user = Utilisateur.query.get(other_user_id)
+            direct_convs[other_user_id] = {
+                'type': 'direct',
+                'id': other_user_id,
+                'autre_participant': other_user,
+                'messages_non_lus': 0,
+                'last_message_date': msg.date_envoi  # Store date from most recent message (first in desc order)
+            }
+        
+        
+        if msg.expediteur_id != current_user.id and not msg.lu:
+            direct_convs[other_user_id]['messages_non_lus'] += 1
+    
+    conversations.extend(direct_convs.values())
+    
+    # Sort by most recent message - direct chats by last_message_date, reservation chats by reservation date
+    def get_sort_date(conv):
+        if conv.get('type') == 'direct':
+            return conv.get('last_message_date', datetime.min)
+        else:
+            return conv.get('reservation').date_reservation if conv.get('reservation') else datetime.min
+    
+    conversations.sort(key=get_sort_date, reverse=True)
+    
+    return render_template('chats.html', conversations=conversations)
+
+@app.route('/direct_chat/<int:user_id>')
+@login_required
+def direct_chat(user_id):
+    """Page for direct messaging with a user"""
+    autre_user = Utilisateur.query.get_or_404(user_id)
+    
+    if user_id == current_user.id:
+        flash('Vous ne pouvez pas vous envoyer de message', 'danger')
+        return redirect(url_for('chats'))
+    
+    # Mark messages as read
+    Message.query.filter_by(
+        destinataire_id=current_user.id,
+        expediteur_id=user_id,
+        reservation_id=None,
+        lu=False
+    ).update({'lu': True}, synchronize_session='fetch')
+    db.session.commit()
+    
+    # Get messages between these users
+    messages = Message.query.filter(
+        db.and_(
+            db.or_(
+                db.and_(Message.expediteur_id == current_user.id, Message.destinataire_id == user_id),
+                db.and_(Message.expediteur_id == user_id, Message.destinataire_id == current_user.id)
+            ),
+            Message.reservation_id.is_(None)
+        )
+    ).order_by(Message.date_envoi).all()
+    
+    # Create the direct chat ID (sorted user IDs)
+    direct_chat_id = create_direct_chat_id(current_user.id, user_id)
+    
+    return render_template('direct_chat.html',
+                         autre_participant=autre_user,
+                         messages=messages,
+                         direct_chat_id=direct_chat_id)
+
+@app.route('/contact_driver/<int:trajet_id>')
+@login_required
+def contact_driver(trajet_id):
+    """Route to contact the driver of a trip from search results"""
+    if current_user.type_utilisateur != 'passager':
+        flash('Seuls les passagers peuvent contacter les conducteurs', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    trajet = Trajet.query.get_or_404(trajet_id)
+    driver = trajet.conducteur
+    
+    # Redirect to direct chat
+    return redirect(url_for('direct_chat', user_id=driver.id))
+
+
+def create_direct_chat_id(user_id1, user_id2):
+    """Create a direct chat ID from two user IDs (sorted).
+    
+    IDs are sorted to ensure consistent room identifiers regardless of
+    which user initiates the conversation.
+    
+    Args:
+        user_id1: First user ID
+        user_id2: Second user ID
+        
+    Returns:
+        String in format 'min_id_max_id' (e.g., '1_42')
+    """
+    return f"{min(user_id1, user_id2)}_{max(user_id1, user_id2)}"
 
 @socketio.on('connect')
 def handle_connect():
@@ -418,9 +567,14 @@ def handle_join_chat(data):
     """Rejoindre une room de chat"""
     try:
         reservation_id = data.get('reservation_id')
+        direct_chat_id = data.get('direct_chat_id')  # Format: "user1_user2" (sorted)
+        
         if reservation_id:
             join_room(str(reservation_id))
             print(f"📢 Un utilisateur a rejoint le chat {reservation_id}")
+        elif direct_chat_id:
+            join_room(str(direct_chat_id))
+            print(f"📢 Un utilisateur a rejoint le chat direct {direct_chat_id}")
     except Exception as e:
         print(f"Erreur join_chat: {e}")
 
@@ -429,8 +583,10 @@ def handle_send_message(data):
     """Envoyer un message dans le chat"""
     try:
         reservation_id = data.get('reservation_id')
+        direct_chat_id = data.get('direct_chat_id')
         message_content = data.get('message', '').strip()
         user_id = data.get('user_id')
+        destinataire_id = data.get('destinataire_id')  # For direct messages
         
         if not message_content or not user_id:
             print("Message ou user_id manquant")
@@ -444,12 +600,64 @@ def handle_send_message(data):
             print("Utilisateur non trouvé")
             return
         
-        message = Message(
-            reservation_id=reservation_id,
-            expediteur_id=user.id,
-            contenu=message_content,
-            lu=False
-        )
+        if reservation_id:
+            # Reservation-based message - validate access
+            reservation = Reservation.query.get(reservation_id)
+            if not reservation or (reservation.passager_id != user.id and reservation.trajet.conducteur_id != user.id):
+                print("Accès non autorisé à cette réservation")
+                return
+            
+            message = Message(
+                reservation_id=reservation_id,
+                expediteur_id=user.id,
+                contenu=message_content,
+                lu=False
+            )
+            room = str(reservation_id)
+        elif direct_chat_id and destinataire_id:
+            # Direct message - validate that user is authorized
+            
+            try:
+                destinataire_id_int = int(destinataire_id)
+            except (ValueError, TypeError):
+                print("destinataire_id invalide")
+                return
+            
+            # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
+            chat_ids = direct_chat_id.split('_')
+            if len(chat_ids) != 2:
+                print("Format de chat direct invalide (attendu: user_id1_user_id2)")
+                return
+            
+            # Parse chat IDs and verify user is a participant
+            try:
+                chat_id_list = [int(id_str) for id_str in chat_ids]
+            except ValueError:
+                print("Format des IDs de chat invalide")
+                return
+            
+            if user.id not in chat_id_list or destinataire_id_int not in chat_id_list:
+                print("Utilisateur non autorisé pour ce chat")
+                return
+            
+            expected_chat_id = create_direct_chat_id(user.id, destinataire_id_int)
+            
+            if direct_chat_id != expected_chat_id:
+                print("ID de chat direct invalide")
+                return
+            
+            message = Message(
+                reservation_id=None,
+                expediteur_id=user.id,
+                destinataire_id=destinataire_id_int,
+                contenu=message_content,
+                lu=False
+            )
+            room = str(direct_chat_id)
+        else:
+            print("Mode de chat invalide")
+            return
+        
         db.session.add(message)
         db.session.commit()
         
@@ -460,8 +668,8 @@ def handle_send_message(data):
             'date_envoi': datetime.now().strftime('%H:%M')
         }
         
-        emit('new_message', message_data, room=str(reservation_id))
-        print(f"💬 Message de {user.nom} dans chat {reservation_id}: {message_content[:50]}")
+        emit('new_message', message_data, room=room)
+        print(f"💬 Message de {user.nom}: {message_content[:50]}")
         
     except Exception as e:
         print(f"❌ Erreur send_message: {e}")
@@ -472,9 +680,14 @@ def handle_leave_chat(data):
     """Quitter une room de chat"""
     try:
         reservation_id = data.get('reservation_id')
+        direct_chat_id = data.get('direct_chat_id')
+        
         if reservation_id:
             leave_room(str(reservation_id))
             print(f"👋 Utilisateur a quitté le chat {reservation_id}")
+        elif direct_chat_id:
+            leave_room(str(direct_chat_id))
+            print(f"👋 Utilisateur a quitté le chat direct {direct_chat_id}")
     except Exception as e:
         print(f"Erreur leave_chat: {e}")
 

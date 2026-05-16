@@ -195,14 +195,16 @@ class Message(db.Model):
     __tablename__ = 'messages'
     
     id = db.Column(db.Integer, primary_key=True)
-    reservation_id = db.Column(db.Integer, db.ForeignKey('reservations.id'), nullable=False)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservations.id'), nullable=True)  # Now optional for direct messages
     expediteur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=False)
+    destinataire_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=True)  # For direct messages
     contenu = db.Column(db.String(500), nullable=False)
     date_envoi = db.Column(db.DateTime, default=datetime.now)
     lu = db.Column(db.Boolean, default=False)
     
     # Relations
     expediteur = db.relationship('Utilisateur', foreign_keys=[expediteur_id])
+    destinataire = db.relationship('Utilisateur', foreign_keys=[destinataire_id])
 
 
 # ============================================
