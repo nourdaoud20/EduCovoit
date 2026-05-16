@@ -464,7 +464,7 @@ def chats():
                 'id': other_user_id,
                 'autre_participant': other_user,
                 'messages_non_lus': 0,
-                'last_message_date': msg.date_envoi  # Store most recent message date
+                'last_message_date': msg.date_envoi  # Store date from most recent message (first in desc order)
             }
         
         
@@ -596,12 +596,31 @@ def handle_send_message(data):
             room = str(reservation_id)
         elif direct_chat_id and destinataire_id:
             # Direct message - validate that user is authorized
-            destinataire_id_int = int(destinataire_id)
+            if not destinataire_id:
+                print("destinataire_id manquant")
+                return
+            
+            try:
+                destinataire_id_int = int(destinataire_id)
+            except (ValueError, TypeError):
+                print("destinataire_id invalide")
+                return
             
             # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
             chat_ids = direct_chat_id.split('_')
             if len(chat_ids) != 2:
                 print("Format de chat direct invalide")
+                return
+            
+            # Parse chat IDs and verify user is a participant
+            try:
+                chat_id_list = [int(id_str) for id_str in chat_ids]
+            except ValueError:
+                print("Format des IDs de chat invalide")
+                return
+            
+            if user.id not in chat_id_list or destinataire_id_int not in chat_id_list:
+                print("Utilisateur non autorisé pour ce chat")
                 return
             
             sorted_ids = sorted([user.id, destinataire_id_int])
