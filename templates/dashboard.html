@@ -1,102 +1,228 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="hero-section fade-in text-center">
-    <i class="fas fa-car-side" style="font-size: 50px;"></i>
-    <h1 class="mt-3">Tableau de bord</h1>
-    <p class="mb-0">Bienvenue, <strong>{{ current_user.nom }}</strong> !</p>
-    <small>⭐ Note: {{ current_user.note_moyenne|round(1) }}/5 ({{ current_user.nombre_avis }} avis)</small>
+<!-- Hero Section -->
+<div class="hero-section fade-in text-center" style="margin-bottom: 2rem;">
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-tachometer-alt" style="font-size: 4rem; margin-bottom: 1rem; display: block;"></i>
+        <h1>Tableau de bord</h1>
+        <p>Bienvenue, <strong>{{ current_user.nom }}</strong> !</p>
+        <div style="margin-top: 1rem;">
+            {% for i in range(5) %}
+                <i class="fas fa-star" style="color: {% if i < current_user.note_moyenne|int %}#ffc107{% else %}#ddd{% endif %}; margin: 0 2px;"></i>
+            {% endfor %}
+            <span style="margin-left: 1rem;">{{ current_user.note_moyenne|round(1) }}/5 ({{ current_user.nombre_avis }} avis)</span>
+        </div>
+    </div>
 </div>
 
 {% if type_user == 'conducteur' %}
+<!-- CONDUCTEUR DASHBOARD -->
 <div class="row">
-    <div class="col-md-7">
-        <div class="card fade-in">
-            <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-route"></i> Mes trajets publiés</h5></div>
-            <div class="card-body">
-                <a href="{{ url_for('publier_trajet') }}" class="btn btn-success mb-3"><i class="fas fa-plus-circle"></i> Nouveau trajet</a>
-                <a href="{{ url_for('gestion_trajets') }}" class="btn btn-warning mb-3 ms-2"><i class="fas fa-cog"></i> Gérer mes trajets</a>
+    <!-- My Trips Section -->
+    <div class="col-md-7 fade-in">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 1.5rem; color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 style="color: white; margin: 0;"><i class="fas fa-route"></i> Mes trajets publiés</h4>
+                    <span class="badge bg-light text-primary">{{ trajets|length }}</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <a href="{{ url_for('publier_trajet') }}" class="btn btn-success flex-grow-1">
+                        <i class="fas fa-plus-circle"></i> Nouveau trajet
+                    </a>
+                    <a href="{{ url_for('gestion_trajets') }}" class="btn btn-warning flex-grow-1">
+                        <i class="fas fa-cog"></i> Gérer trajets
+                    </a>
+                </div>
                 {% if trajets %}
                     {% for trajet in trajets %}
-                    <div class="card mb-2"><div class="card-body"><div class="d-flex justify-content-between">
-                        <div><h6 class="text-primary">{{ trajet.depart }} → {{ trajet.arrivee }}</h6>
-                        <p class="mb-1"><i class="far fa-calendar-alt"></i> {{ trajet.date }} à {{ trajet.heure }}</p>
-                        <p class="mb-0"><i class="fas fa-money-bill-wave"></i> {{ trajet.prix }} TND | 💺 {{ trajet.places_disponibles }}/{{ trajet.places_initiales }} places</p></div>
-                        {% if trajet.date >= today %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Passé</span>{% endif %}
-                    </div></div></div>
+                    <div class="card mb-3" style="border-left: 4px solid {% if trajet.date >= today %}#28a745{% else %}#999{% endif %}; border-radius: 12px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 style="color: #003F87; margin-bottom: 0.5rem;">
+                                        {{ trajet.depart }} <span style="color: #E70A13;">→</span> {{ trajet.arrivee }}
+                                    </h6>
+                                    <small style="color: #999;"><i class="far fa-calendar-alt"></i> {{ trajet.date }} à {{ trajet.heure }}</small>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; font-size: 1.1rem;">{{ trajet.prix }} TND</div>
+                                    <small style="color: #999;">💺 {{ trajet.places_disponibles }}/{{ trajet.places_initiales }}</small>
+                                </div>
+                            </div>
+                            <div style="margin-top: 0.75rem;">
+                                {% if trajet.date >= today %}
+                                    <span class="badge bg-success"><i class="fas fa-circle"></i> Actif</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-circle"></i> Passé</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
-                {% else %}<div class="alert alert-info">Aucun trajet publié.</div>{% endif %}
+                {% else %}
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <i class="fas fa-inbox" style="font-size: 2.5rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+                        <p style="color: #999;">Aucun trajet publié</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    <div class="col-md-5">
-        <div class="card fade-in mb-4">
-            <div class="card-header bg-warning"><h5 class="mb-0"><i class="fas fa-clock"></i> Demandes en attente</h5></div>
-            <div class="card-body">
+
+    <!-- Pending & Chats Section -->
+    <div class="col-md-5 fade-in">
+        <!-- Pending Requests -->
+        <div class="card mb-4" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); padding: 1.5rem; color: white;">
+                <h4 style="color: white; margin: 0;"><i class="fas fa-hourglass-half"></i> Demandes en attente</h4>
+            </div>
+            <div class="card-body p-4">
                 {% if reservations_attendues %}
                     {% for demande in reservations_attendues %}
-                    <div class="alert alert-light"><p><strong>{{ demande.passager.nom }}</strong> veut réserver</p>
-                    <p class="small">{{ demande.trajet.depart }} → {{ demande.trajet.arrivee }}</p>
-                    <a href="{{ url_for('gerer_reservations') }}" class="btn btn-sm btn-primary">Gérer</a></div>
+                    <div class="alert alert-light mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong style="color: #003F87;">{{ demande.passager.nom }}</strong>
+                            <small style="display: block; color: #999;"><i class="fas fa-location-dot"></i> {{ demande.trajet.depart }} → {{ demande.trajet.arrivee }}</small>
+                        </div>
+                        <a href="{{ url_for('gerer_reservations') }}" class="btn btn-sm btn-primary">Gérer</a>
+                    </div>
                     {% endfor %}
-                {% else %}<p class="text-muted">Aucune demande en attente.</p>{% endif %}
+                {% else %}
+                    <p style="color: #999; text-align: center; padding: 1rem 0; margin: 0;">
+                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                        Aucune demande en attente
+                    </p>
+                {% endif %}
             </div>
         </div>
-        <div class="card fade-in">
-            <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-comments"></i> 💬 Mes Chats</h5></div>
-            <div class="card-body">
+
+        <!-- Active Chats -->
+        <div class="card fade-in" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #17a2b8 0%, #00acc1 100%); padding: 1.5rem; color: white;">
+                <h4 style="color: white; margin: 0;"><i class="fas fa-comments"></i> Conversations</h4>
+            </div>
+            <div class="card-body p-4">
                 {% if chats_actifs %}
                     {% for chat in chats_actifs %}
-                    <a href="{{ url_for('chat', reservation_id=chat.reservation.id) }}" class="text-decoration-none">
-                        <div class="alert alert-light mb-2 d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-user-circle"></i> <strong>{{ chat.reservation.passager.nom }}</strong><br><small class="text-muted">{{ chat.reservation.trajet.depart }} → {{ chat.reservation.trajet.arrivee }}</small></div>
-                            {% if chat.messages_non_lus > 0 %}<span class="badge bg-danger rounded-pill">{{ chat.messages_non_lus }}</span>{% else %}<i class="fas fa-comment-dots text-primary"></i>{% endif %}
+                    <a href="{{ url_for('chat', reservation_id=chat.reservation.id) }}" class="text-decoration-none d-block mb-2">
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease;">
+                            <div>
+                                <div class="user-avatar" style="width: 35px; height: 35px; font-size: 0.9rem; display: inline-block; margin-right: 0.5rem; vertical-align: middle;"></div>
+                                <div style="display: inline-block; vertical-align: middle;">
+                                    <strong style="color: #003F87;">{{ chat.reservation.passager.nom }}</strong>
+                                    <small style="display: block; color: #999;">{{ chat.reservation.trajet.depart }}</small>
+                                </div>
+                            </div>
+                            {% if chat.messages_non_lus > 0 %}
+                                <span class="badge bg-danger" style="animation: pulse 2s infinite;">{{ chat.messages_non_lus }}</span>
+                            {% else %}
+                                <i class="fas fa-comment-dots" style="color: #003F87;"></i>
+                            {% endif %}
                         </div>
                     </a>
                     {% endfor %}
-                {% else %}<p class="text-muted">Aucune conversation active.</p><small>Les chats apparaîtront ici après confirmation des réservations.</small>{% endif %}
+                {% else %}
+                    <p style="color: #999; text-align: center; padding: 1rem 0; margin: 0;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                        Aucune conversation<br>
+                        <small>Apparaîtront après confirmation</small>
+                    </p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
 {% else %}
+<!-- PASSAGER DASHBOARD -->
 <div class="row">
-    <div class="col-md-7">
-        <div class="card fade-in">
-            <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-book"></i> Mes réservations</h5></div>
-            <div class="card-body">
-                <a href="{{ url_for('rechercher') }}" class="btn btn-success mb-3"><i class="fas fa-search"></i> Rechercher un trajet</a>
+    <!-- My Reservations Section -->
+    <div class="col-md-7 fade-in">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 1.5rem; color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 style="color: white; margin: 0;"><i class="fas fa-list"></i> Mes réservations</h4>
+                    <span class="badge bg-light text-primary">{{ reservations|length }}</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <a href="{{ url_for('rechercher') }}" class="btn btn-success w-100 mb-3">
+                    <i class="fas fa-search"></i> Rechercher un trajet
+                </a>
                 {% if reservations %}
                     {% for res in reservations %}
-                    <div class="card mb-2"><div class="card-body"><div class="d-flex justify-content-between align-items-start">
-                        <div><h6 class="text-primary">{{ res.trajet.depart }} → {{ res.trajet.arrivee }}</h6>
-                        <p class="mb-1"><i class="far fa-calendar-alt"></i> {{ res.trajet.date }} à {{ res.trajet.heure }}</p>
-                        <p class="mb-1"><i class="fas fa-user"></i> Conducteur: {{ res.trajet.conducteur.nom }}</p>
-                        <p><i class="fas fa-star text-warning"></i> Note: {{ res.trajet.conducteur.note_moyenne|round(1) }}/5</p></div>
-                        <div>{% if res.statut == 'en_attente' %}<span class="badge bg-warning">⏳ En attente</span>
-                        {% elif res.statut == 'confirmee' %}<span class="badge bg-success">✅ Confirmée</span>
-                        {% elif res.statut == 'annulee' %}<span class="badge bg-danger">❌ Annulée</span>
-                        {% elif res.statut == 'terminee' %}<span class="badge bg-secondary">🏁 Terminée</span>{% endif %}</div>
-                    </div></div></div>
+                    <div class="card mb-3" style="border-left: 4px solid {% if res.statut == 'confirmee' %}#28a745{% elif res.statut == 'en_attente' %}#ffc107{% else %}#dc3545{% endif %}; border-radius: 12px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 style="color: #003F87; margin-bottom: 0.5rem;">
+                                        {{ res.trajet.depart }} <span style="color: #E70A13;">→</span> {{ res.trajet.arrivee }}
+                                    </h6>
+                                    <small style="color: #999;"><i class="far fa-calendar-alt"></i> {{ res.trajet.date }} à {{ res.trajet.heure }}</small>
+                                </div>
+                                {% if res.statut == 'en_attente' %}
+                                    <span class="badge bg-warning"><i class="fas fa-hourglass-half"></i> Attente</span>
+                                {% elif res.statut == 'confirmee' %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle"></i> Confirmée</span>
+                                {% elif res.statut == 'annulee' %}
+                                    <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Annulée</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-flag"></i> Terminée</span>
+                                {% endif %}
+                            </div>
+                            <small style="color: #999;"><i class="fas fa-user"></i> {{ res.trajet.conducteur.nom }}</small>
+                        </div>
+                    </div>
                     {% endfor %}
-                {% else %}<div class="alert alert-info">Aucune réservation.</div>{% endif %}
+                {% else %}
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <i class="fas fa-inbox" style="font-size: 2.5rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+                        <p style="color: #999;">Aucune réservation</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    <div class="col-md-5">
-        <div class="card fade-in">
-            <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-comments"></i> 💬 Mes Chats</h5></div>
-            <div class="card-body">
+
+    <!-- Active Chats -->
+    <div class="col-md-5 fade-in">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #17a2b8 0%, #00acc1 100%); padding: 1.5rem; color: white;">
+                <h4 style="color: white; margin: 0;"><i class="fas fa-comments"></i> Conversations</h4>
+            </div>
+            <div class="card-body p-4">
                 {% if chats_actifs %}
                     {% for chat in chats_actifs %}
-                    <a href="{{ url_for('chat', reservation_id=chat.reservation.id) }}" class="text-decoration-none">
-                        <div class="alert alert-light mb-2 d-flex justify-content-between align-items-center">
-                            <div><i class="fas fa-user-circle"></i> <strong>{{ chat.reservation.trajet.conducteur.nom }}</strong><br><small class="text-muted">{{ chat.reservation.trajet.depart }} → {{ chat.reservation.trajet.arrivee }}</small></div>
-                            {% if chat.messages_non_lus > 0 %}<span class="badge bg-danger rounded-pill">{{ chat.messages_non_lus }}</span>{% else %}<i class="fas fa-comment-dots text-primary"></i>{% endif %}
+                    <a href="{{ url_for('chat', reservation_id=chat.reservation.id) }}" class="text-decoration-none d-block mb-2">
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease;">
+                            <div>
+                                <div class="user-avatar" style="width: 35px; height: 35px; font-size: 0.9rem; display: inline-block; margin-right: 0.5rem; vertical-align: middle;">
+                                    {{ chat.reservation.trajet.conducteur.nom[0] }}
+                                </div>
+                                <div style="display: inline-block; vertical-align: middle;">
+                                    <strong style="color: #003F87;">{{ chat.reservation.trajet.conducteur.nom }}</strong>
+                                    <small style="display: block; color: #999;">{{ chat.reservation.trajet.depart }}</small>
+                                </div>
+                            </div>
+                            {% if chat.messages_non_lus > 0 %}
+                                <span class="badge bg-danger" style="animation: pulse 2s infinite;">{{ chat.messages_non_lus }}</span>
+                            {% else %}
+                                <i class="fas fa-comment-dots" style="color: #003F87;"></i>
+                            {% endif %}
                         </div>
                     </a>
                     {% endfor %}
-                {% else %}<p class="text-muted">Aucune conversation active.</p><small>Les chats apparaîtront ici après confirmation de vos réservations.</small>{% endif %}
+                {% else %}
+                    <p style="color: #999; text-align: center; padding: 1rem 0; margin: 0;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                        Aucune conversation<br>
+                        <small>Après confirmation de réservation</small>
+                    </p>
+                {% endif %}
             </div>
         </div>
     </div>

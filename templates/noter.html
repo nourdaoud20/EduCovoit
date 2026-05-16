@@ -2,28 +2,74 @@
 
 {% block content %}
 <div class="row justify-content-center fade-in">
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-star"></i> Noter {{ cible.nom }}</h4></div>
-            <div class="card-body">
+    <div class="col-md-6 col-lg-5">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); padding: 2rem; text-align: center; color: white;">
+                <i class="fas fa-star" style="font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="color: white; margin-bottom: 0.5rem;">Évaluer</h3>
+                <p style="color: rgba(255, 255, 255, 0.9); margin: 0;">{{ cible.nom }}</p>
+            </div>
+            <div class="card-body" style="padding: 2rem;">
                 <form method="POST" action="{{ url_for('soumettre_note', reservation_id=reservation.id, type_note=type_note) }}">
-                    <div class="mb-3 text-center">
-                        <label class="form-label fw-bold">Votre note (1 à 5)</label>
-                        <div class="rating">
-                            {% for i in range(1, 6) %}<input type="radio" name="note" value="{{ i }}" id="star{{ i }}" required><label for="star{{ i }}" style="font-size: 30px; cursor: pointer;">★</label>{% endfor %}
+                    <!-- Star Rating -->
+                    <div class="mb-4 text-center">
+                        <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 1rem;">Quelle est votre note ?</label>
+                        <div style="display: flex; justify-content: center; gap: 1rem; font-size: 3rem;">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" name="note" value="{{ i }}" id="star{{ i }}" style="display: none;" required>
+                            <label for="star{{ i }}" style="cursor: pointer; color: #ddd; transition: all 0.2s;">
+                                <i class="fas fa-star"></i>
+                            </label>
+                            {% endfor %}
                         </div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Commentaire (optionnel)</label><textarea name="commentaire" class="form-control" rows="3" placeholder="Partagez votre expérience..."></textarea></div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-star"></i> Envoyer la note</button>
+
+                    <style>
+                        input[type="radio"] ~ label i { color: #ddd; }
+                        #star1:checked ~ label:nth-of-type(1) i,
+                        #star1:checked ~ label:nth-of-type(1) i + label i + label i + label i,
+                        #star2:checked ~ label:nth-of-type(1) i,
+                        #star2:checked ~ label:nth-of-type(2) i,
+                        #star2:checked ~ label:nth-of-type(2) i + label i + label i,
+                        #star3:checked ~ label:nth-of-type(1) i,
+                        #star3:checked ~ label:nth-of-type(2) i,
+                        #star3:checked ~ label:nth-of-type(3) i,
+                        #star3:checked ~ label:nth-of-type(3) i + label i,
+                        #star4:checked ~ label:nth-of-type(1) i,
+                        #star4:checked ~ label:nth-of-type(2) i,
+                        #star4:checked ~ label:nth-of-type(3) i,
+                        #star4:checked ~ label:nth-of-type(4) i,
+                        #star5:checked ~ label:nth-of-type(1) i,
+                        #star5:checked ~ label:nth-of-type(2) i,
+                        #star5:checked ~ label:nth-of-type(3) i,
+                        #star5:checked ~ label:nth-of-type(4) i,
+                        #star5:checked ~ label:nth-of-type(5) i { color: #ffc107; }
+                    </style>
+
+                    <!-- Simpler Star Rating -->
+                    <div class="mb-4 text-center">
+                        <div class="btn-group" style="display: flex; gap: 0.5rem; justify-content: center;">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" name="note" value="{{ i }}" id="rating{{ i }}" class="btn-check" required>
+                            <label for="rating{{ i }}" class="btn btn-outline-warning" style="padding: 0.5rem 1rem; cursor: pointer;">
+                                {{ i }} <i class="fas fa-star"></i>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-comment"></i> Commentaire (optionnel)</label>
+                        <textarea name="commentaire" class="form-control" rows="4" placeholder="Partagez votre expérience avec {{ cible.nom }}..." style="border-radius: 12px;"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 btn-lg" style="font-weight: 600;">
+                        <i class="fas fa-star"></i> Envoyer mon évaluation
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-<style>
-    .rating { direction: rtl; unicode-bidi: bidi-override; }
-    .rating input { display: none; }
-    .rating label:hover, .rating label:hover ~ label, .rating input:checked ~ label { color: #ffc107; }
-    .rating label { color: #ddd; }
-</style>
 {% endblock %}

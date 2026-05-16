@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 1rem;">
+    <div style="background: linear-gradient(135deg, #E70A13 0%, #c00810 100%); 
+                color: white; 
+                padding: 4rem 2rem; 
+                border-radius: 20px; 
+                margin-bottom: 2rem;">
+        <div style="font-size: 5rem; font-weight: 700; line-height: 1;">500</div>
+        <h2 style="color: white; margin: 1rem 0;">Erreur serveur</h2>
+        <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.9);">Une erreur interne est survenue. Notre équipe a été notifiée.</p>
+    </div>
+
+    <div style="max-width: 500px; margin: 0 auto;">
+        <i class="fas fa-tools" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+        <h3 style="color: #999; margin-bottom: 1.5rem;">Nous travaillons à corriger ce problème</h3>
+        <p style="color: #999; margin-bottom: 2rem;">Une erreur inopinée s'est produite. Veuillez réessayer plus tard ou contacter l'assistance.</p>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-home"></i> Accueil
+            </a>
+            <button onclick="location.reload()" class="btn btn-secondary btn-lg">
+                <i class="fas fa-redo"></i> Réessayer
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

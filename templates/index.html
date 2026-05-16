@@ -1,16 +1,115 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Hero Section -->
 <div class="hero-section fade-in text-center">
-    <i class="fas fa-car-side" style="font-size: 80px;"></i>
-    <h1 class="mt-3">Bienvenue sur EduCovoit Tunisie</h1>
-    <p>La plateforme de covoiturage dédiée aux étudiants tunisiens 🇹🇳</p>
-    <p>Économisez sur vos trajets, réduisez votre empreinte carbone et créez du lien social !</p>
-    <div class="mt-3"><a href="{{ url_for('inscription') }}" class="btn btn-primary btn-lg me-2"><i class="fas fa-user-plus"></i> S'inscrire</a><a href="{{ url_for('connexion') }}" class="btn btn-outline-light btn-lg"><i class="fas fa-sign-in-alt"></i> Se connecter</a></div>
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-car-side" style="font-size: 5rem; margin-bottom: 1rem;"></i>
+        <h1>Bienvenue sur EduCovoit Tunisie</h1>
+        <p style="font-size: 1.25rem; margin-bottom: 1.5rem;">La plateforme de covoiturage dédiée aux étudiants tunisiens 🇹🇳</p>
+        <p>Économisez sur vos trajets • Réduisez votre empreinte carbone • Créez du lien social</p>
+        <div class="mt-4">
+            <a href="{{ url_for('inscription') }}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-user-plus"></i> S'inscrire
+            </a>
+            <a href="{{ url_for('connexion') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Se connecter
+            </a>
+        </div>
+    </div>
 </div>
-<div class="row mt-5 text-center">
-    <div class="col-md-4"><div class="card p-3"><i class="fas fa-money-bill-wave" style="font-size: 40px; color: #003F87;"></i><h4>Économies</h4><p>Réduisez vos dépenses de transport jusqu'à 50%</p></div></div>
-    <div class="col-md-4"><div class="card p-3"><i class="fas fa-leaf" style="font-size: 40px; color: #003F87;"></i><h4>Écologique</h4><p>Moins de voitures = moins de CO₂</p></div></div>
-    <div class="col-md-4"><div class="card p-3"><i class="fas fa-users" style="font-size: 40px; color: #003F87;"></i><h4>Social</h4><p>Rencontrez d'autres étudiants</p></div></div>
+
+<!-- Features Section -->
+<div class="row mt-5 text-center mb-5">
+    <div class="col-md-4 mb-3 fade-in">
+        <div class="card h-100">
+            <div class="card-body">
+                <i class="fas fa-money-bill-wave" style="font-size: 3rem; color: #003F87; margin-bottom: 1rem;"></i>
+                <h4>💰 Économies</h4>
+                <p>Réduisez vos dépenses de transport jusqu'à 50% en partageant vos trajets quotidiens.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 fade-in">
+        <div class="card h-100">
+            <div class="card-body">
+                <i class="fas fa-leaf" style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;"></i>
+                <h4>🌍 Écologique</h4>
+                <p>Moins de voitures = moins de CO₂. Contribuez à la protection de notre environnement.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 fade-in">
+        <div class="card h-100">
+            <div class="card-body">
+                <i class="fas fa-users" style="font-size: 3rem; color: #E70A13; margin-bottom: 1rem;"></i>
+                <h4>👥 Social</h4>
+                <p>Rencontrez d'autres étudiants et créez des liens au-delà de vos trajets.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="mt-5 mb-5">
+    <div class="text-center mb-4">
+        <h2>Comment ça marche ?</h2>
+        <p class="text-muted">Trois étapes simples pour commencer votre voyage</p>
+    </div>
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-3 fade-in">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #003F87, #E70A13); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h5>1. Inscription</h5>
+                    <p class="small">Créez votre compte en moins de 2 minutes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3 fade-in">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #003F87, #E70A13); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h5>2. Recherche</h5>
+                    <p class="small">Trouvez un trajet qui vous convient</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3 fade-in">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #003F87, #E70A13); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h5>3. Réservation</h5>
+                    <p class="small">Réservez et discutez avec le conducteur</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3 fade-in">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #003F87, #E70A13); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h5>4. Évaluation</h5>
+                    <p class="small">Notez votre expérience et avisez autres</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div style="background: linear-gradient(135deg, #003F87 0%, #E70A13 100%); border-radius: 20px; padding: 3rem 2rem; color: white; text-align: center; margin-bottom: 2rem;">
+    <h3>Prêt à économiser et à protéger l'environnement ?</h3>
+    <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.9); margin: 1rem 0;">Rejoignez les milliers d'étudiants qui font la différence chaque jour</p>
+    <a href="{{ url_for('inscription') }}" class="btn btn-light" style="color: #003F87; font-weight: 600;">
+        <i class="fas fa-rocket"></i> Commencer maintenant
+    </a>
 </div>
 {% endblock %}
