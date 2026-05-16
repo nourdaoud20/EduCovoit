@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 1rem;">
+    <div style="background: linear-gradient(135deg, #003F87 0%, #E70A13 100%); 
+                color: white; 
+                padding: 4rem 2rem; 
+                border-radius: 20px; 
+                margin-bottom: 2rem;">
+        <div style="font-size: 5rem; font-weight: 700; line-height: 1;">404</div>
+        <h2 style="color: white; margin: 1rem 0;">Page non trouvée</h2>
+        <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.9);">Désolé, la page que vous cherchez n'existe pas</p>
+    </div>
+
+    <div style="max-width: 500px; margin: 0 auto;">
+        <i class="fas fa-map" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+        <h3 style="color: #999; margin-bottom: 1.5rem;">Vous vous êtes perdu ?</h3>
+        <p style="color: #999; margin-bottom: 2rem;">La page que vous demandez n'existe pas ou a été déplacée.</p>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-home"></i> Accueil
+            </a>
+            <a href="{{ url_for('rechercher') if current_user.is_authenticated else url_for('connexion') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-search"></i> Rechercher
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

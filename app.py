@@ -506,6 +506,21 @@ def profil():
     return render_template('profil.html', utilisateur=current_user)
 
 # ============================================
+# GESTION DES ERREURS
+# ============================================
+
+@app.errorhandler(404)
+def page_not_found(error):
+    """Gérer les pages non trouvées"""
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Gérer les erreurs serveur"""
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+# ============================================
 # LANCEMENT
 # ============================================
 
