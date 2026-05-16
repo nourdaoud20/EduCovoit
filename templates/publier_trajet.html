@@ -2,22 +2,45 @@
 
 {% block content %}
 <div class="row justify-content-center fade-in">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-plus-circle"></i> Publier un trajet</h4></div>
-            <div class="card-body">
+    <div class="col-md-6 col-lg-5">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 2rem; text-align: center; color: white;">
+                <i class="fas fa-plus-circle" style="font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="color: white; margin-bottom: 0;">Publier un trajet</h3>
+            </div>
+            <div class="card-body" style="padding: 2rem;">
                 <form method="POST">
-                    <div class="mb-3"><label class="form-label"><i class="fas fa-location-dot"></i> Départ</label><input type="text" name="depart" class="form-control" placeholder="Ex: Tunis, Ariana, Nabeul..." required></div>
-                    <div class="mb-3"><label class="form-label"><i class="fas fa-location-dot"></i> Arrivée</label><input type="text" name="arrivee" class="form-control" placeholder="Ex: Université El Manar, ESPRIT..." required></div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label"><i class="far fa-calendar-alt"></i> Date</label><input type="date" name="date" class="form-control" min="{{ today }}" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label"><i class="far fa-clock"></i> Heure</label><input type="time" name="heure" class="form-control" required></div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-location-dot"></i> Départ</label>
+                        <input type="text" name="depart" class="form-control" placeholder="Ex: Tunis, Ariana, Nabeul..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-map-pin"></i> Arrivée</label>
+                        <input type="text" name="arrivee" class="form-control" placeholder="Ex: Université El Manar, ESPRIT..." required>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label"><i class="fas fa-users"></i> Places disponibles</label><input type="number" name="places" min="1" max="4" class="form-control" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label"><i class="fas fa-money-bill-wave"></i> Prix (TND)</label><input type="number" name="prix" step="0.5" min="0" class="form-control" required></div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="far fa-calendar-alt"></i> Date</label>
+                            <input type="date" name="date" class="form-control" min="{{ today }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="far fa-clock"></i> Heure</label>
+                            <input type="time" name="heure" class="form-control" required>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-check-circle"></i> Publier le trajet</button>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fas fa-users"></i> Places</label>
+                            <input type="number" name="places" min="1" max="4" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fas fa-money-bill-wave"></i> Prix (TND)</label>
+                            <input type="number" name="prix" step="0.5" min="0" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg" style="font-weight: 600; margin-top: 1rem;">
+                        <i class="fas fa-check-circle"></i> Publier le trajet
+                    </button>
                 </form>
             </div>
         </div>

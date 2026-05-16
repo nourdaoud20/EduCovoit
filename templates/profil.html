@@ -1,18 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center fade-in">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white"><h4 class="mb-0"><i class="fas fa-user"></i> Mon profil</h4></div>
-            <div class="card-body">
+<div class="row fade-in">
+    <div class="col-md-4 mb-4">
+        <div class="card" style="border-radius: 20px; text-align: center; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #E70A13 100%); padding: 2rem;">
+                <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 1rem;">
+                    {{ utilisateur.nom[0].upper() }}
+                </div>
+                <h3 style="color: white; margin-bottom: 0.5rem;">{{ utilisateur.nom }}</h3>
+                <p style="color: rgba(255, 255, 255, 0.9); margin: 0;">
+                    {% if utilisateur.type_utilisateur == 'conducteur' %}
+                        <i class="fas fa-steering-wheel"></i> Conducteur
+                    {% else %}
+                        <i class="fas fa-user"></i> Passager
+                    {% endif %}
+                </p>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <p style="color: #999; font-size: 0.9rem; margin: 0;">Note moyenne</p>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        {% for i in range(5) %}
+                            <i class="fas fa-star" style="color: {% if i < utilisateur.note_moyenne|int %}#ffc107{% else %}#ddd{% endif %};"></i>
+                        {% endfor %}
+                        <span style="font-weight: 600; font-size: 1.1rem;">{{ utilisateur.note_moyenne|round(1) }}/5</span>
+                    </div>
+                    <small style="color: #999;">{{ utilisateur.nombre_avis }} avis</small>
+                </div>
+                <hr>
+                <p style="margin: 0; color: #999; font-size: 0.9rem;"><i class="fas fa-envelope"></i> {{ utilisateur.email }}</p>
+                <p style="margin: 0.5rem 0 0 0; color: #999; font-size: 0.9rem;"><i class="fas fa-phone"></i> {{ utilisateur.telephone }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card fade-in" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 1.5rem; color: white;">
+                <h4 style="color: white; margin: 0;"><i class="fas fa-edit"></i> Modifier mon profil</h4>
+            </div>
+            <div class="card-body p-4">
                 <form method="POST">
-                    <div class="mb-3"><label class="form-label">Nom</label><input type="text" name="nom" class="form-control" value="{{ utilisateur.nom }}" required></div>
-                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" value="{{ utilisateur.email }}" disabled></div>
-                    <div class="mb-3"><label class="form-label">Téléphone</label><input type="tel" name="telephone" class="form-control" value="{{ utilisateur.telephone }}" required></div>
-                    <div class="mb-3"><label class="form-label">Rôle</label><input type="text" class="form-control" value="{{ 'Conducteur' if utilisateur.type_utilisateur == 'conducteur' else 'Passager' }}" disabled></div>
-                    <div class="mb-3"><label class="form-label">Note moyenne</label><input type="text" class="form-control" value="{{ utilisateur.note_moyenne|round(1) }}/5 ({{ utilisateur.nombre_avis }} avis)" disabled></div>
-                    <button type="submit" class="btn btn-primary w-100">Mettre à jour</button>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-user"></i> Nom</label>
+                        <input type="text" name="nom" class="form-control" value="{{ utilisateur.nom }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-phone"></i> Téléphone</label>
+                        <input type="tel" name="telephone" class="form-control" value="{{ utilisateur.telephone }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-envelope"></i> Email (non modifiable)</label>
+                        <input type="email" class="form-control" value="{{ utilisateur.email }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-car"></i> Rôle</label>
+                        <input type="text" class="form-control" value="{{ 'Conducteur' if utilisateur.type_utilisateur == 'conducteur' else 'Passager' }}" disabled>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label"><i class="fas fa-star text-warning"></i> Note moyenne</label>
+                        <div style="font-size: 1.2rem;">
+                            {% for i in range(5) %}
+                                <i class="fas fa-star" style="color: {% if i < utilisateur.note_moyenne|int %}#ffc107{% else %}#ddd{% endif %};"></i>
+                            {% endfor %}
+                            <span style="margin-left: 1rem; font-weight: 600;">{{ utilisateur.note_moyenne|round(1) }}/5</span>
+                        </div>
+                        <small style="color: #999;">Basé sur {{ utilisateur.nombre_avis }} avis</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" style="font-weight: 600;">
+                        <i class="fas fa-save"></i> Enregistrer les modifications
+                    </button>
                 </form>
             </div>
         </div>

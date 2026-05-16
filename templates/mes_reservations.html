@@ -1,42 +1,122 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2 class="text-primary fade-in"><i class="fas fa-list"></i> Mes réservations</h2>
+<!-- Hero Section -->
+<div class="hero-section fade-in text-center" style="margin-bottom: 2rem;">
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-book" style="font-size: 4rem; margin-bottom: 1rem; display: block;"></i>
+        <h1>Mes réservations</h1>
+        <p>Suivi de vos trajets réservés</p>
+    </div>
+</div>
 
-{% if reservations %}
-    <div class="row">
-        {% for res in reservations %}
-        <div class="col-md-6 mb-3 fade-in">
-            <div class="card">
-                <div class="card-body">
-                    <h5>{{ res.trajet.depart }} → {{ res.trajet.arrivee }}</h5>
-                    <p><i class="far fa-calendar-alt"></i> {{ res.trajet.date }} à {{ res.trajet.heure }}</p>
-                    <p><i class="fas fa-user"></i> Conducteur: {{ res.trajet.conducteur.nom }}</p>
-                    <p><i class="fas fa-star text-warning"></i> Note: {{ res.trajet.conducteur.note_moyenne|round(1) }}/5</p>
-                    <p><i class="fas fa-money-bill-wave"></i> Prix: {{ res.trajet.prix }} TND</p>
-                    <p>Statut: 
-                        {% if res.statut == 'en_attente' %}<span class="badge bg-warning">⏳ En attente</span>
-                        {% elif res.statut == 'confirmee' %}<span class="badge bg-success">✅ Confirmée</span>
-                        {% elif res.statut == 'annulee' %}<span class="badge bg-danger">❌ Annulée</span>
-                        {% elif res.statut == 'terminee' %}<span class="badge bg-secondary">🏁 Terminée</span>{% endif %}
-                    </p>
-                    {% if res.statut == 'en_attente' %}
-                        <a href="{{ url_for('annuler_reservation', reservation_id=res.id) }}" class="btn btn-danger btn-sm mt-2" onclick="return confirm('Annuler cette réservation ?')"><i class="fas fa-times"></i> Annuler</a>
-                    {% endif %}
-                    {% if res.statut == 'confirmee' %}
-                        <a href="{{ url_for('chat', reservation_id=res.id) }}" class="btn btn-primary btn-sm mt-2"><i class="fas fa-comments"></i> 💬 Chat</a>
-                    {% endif %}
-                    {% if res.statut == 'confirmee' and res.trajet.date < now|string %}
-                        <a href="{{ url_for('noter', reservation_id=res.id, type_note='conducteur') }}" class="btn btn-warning btn-sm mt-2"><i class="fas fa-star"></i> ⭐ Noter</a>
-                    {% endif %}
+<div class="row fade-in">
+    <div class="col-md-12">
+        <div class="card" style="border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #003F87 0%, #0056b3 100%); padding: 1.5rem; color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 style="color: white; margin: 0;"><i class="fas fa-calendar-check"></i> Vos trajets réservés</h4>
+                    <a href="{{ url_for('rechercher') }}" class="btn btn-light" style="font-weight: 600;">
+                        <i class="fas fa-search"></i> Chercher un nouveau trajet
+                    </a>
                 </div>
             </div>
-        </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="alert alert-info"><i class="fas fa-info-circle"></i> Vous n'avez aucune réservation.</div>
-{% endif %}
+            <div class="card-body p-4">
+                {% if reservations %}
+                    <div class="row">
+                        {% for res in reservations %}
+                        <div class="col-md-6 mb-3 fade-in">
+                            <div class="card h-100" style="border-radius: 16px; border-left: 4px solid {% if res.statut == 'en_attente' %}#ffc107{% elif res.statut == 'confirmee' %}#28a745{% elif res.statut == 'annulee' %}#dc3545{% else %}#6c757d{% endif %};">
+                                <div class="card-body">
+                                    <!-- Status Badge -->
+                                    <div class="mb-2">
+                                        {% if res.statut == 'en_attente' %}
+                                            <span class="badge bg-warning"><i class="fas fa-hourglass-half"></i> En attente</span>
+                                        {% elif res.statut == 'confirmee' %}
+                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Confirmée</span>
+                                        {% elif res.statut == 'annulee' %}
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Annulée</span>
+                                        {% elif res.statut == 'terminee' %}
+                                            <span class="badge bg-secondary"><i class="fas fa-flag"></i> Terminée</span>
+                                        {% endif %}
+                                    </div>
 
-<a href="{{ url_for('rechercher') }}" class="btn btn-success mt-3"><i class="fas fa-search"></i> Rechercher un trajet</a>
+                                    <!-- Trip Info -->
+                                    <h5 style="color: #003F87; margin-bottom: 1rem;">
+                                        <i class="fas fa-map-marker-alt"></i> {{ res.trajet.depart }} 
+                                        <span style="color: #E70A13;"> → </span> 
+                                        {{ res.trajet.arrivee }}
+                                    </h5>
+
+                                    <!-- Details -->
+                                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <small style="color: #999;"><i class="far fa-calendar-alt"></i> Date</small>
+                                                <p style="margin: 0; font-weight: 600;">{{ res.trajet.date }}</p>
+                                            </div>
+                                            <div class="col-6 mb-2">
+                                                <small style="color: #999;"><i class="far fa-clock"></i> Heure</small>
+                                                <p style="margin: 0; font-weight: 600;">{{ res.trajet.heure }}</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <small style="color: #999;"><i class="fas fa-money-bill-wave"></i> Prix</small>
+                                                <p style="margin: 0; font-weight: 600;">{{ res.trajet.prix }} TND</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <small style="color: #999;"><i class="fas fa-star"></i> Note</small>
+                                                <p style="margin: 0; font-weight: 600;">{{ res.trajet.conducteur.note_moyenne|round(1) }}/5</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Driver Info -->
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                        <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                                            {{ res.trajet.conducteur.nom[0] }}
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0; font-weight: 600; color: #003F87;">
+                                                <i class="fas fa-user"></i> {{ res.trajet.conducteur.nom }}
+                                            </p>
+                                            <small style="color: #999;">
+                                                <i class="fas fa-phone"></i> {{ res.trajet.conducteur.telephone }}
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-grid gap-2">
+                                        {% if res.statut == 'en_attente' %}
+                                            <a href="{{ url_for('annuler_reservation', reservation_id=res.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Annuler cette réservation ?')">
+                                                <i class="fas fa-times-circle"></i> Annuler la réservation
+                                            </a>
+                                        {% elif res.statut == 'confirmee' %}
+                                            <a href="{{ url_for('chat', reservation_id=res.id) }}" class="btn btn-sm btn-info text-white">
+                                                <i class="fas fa-comments"></i> Discuter avec le conducteur
+                                            </a>
+                                        {% elif res.statut == 'confirmee' and res.trajet.date < now|string %}
+                                            <a href="{{ url_for('noter', reservation_id=res.id, type_note='conducteur') }}" class="btn btn-sm btn-warning text-white">
+                                                <i class="fas fa-star"></i> Évaluer le conducteur
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 1rem;">
+                        <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem; display: block;"></i>
+                        <p style="color: #999; font-size: 1.1rem; margin: 0;">Aucune réservation pour le moment</p>
+                        <a href="{{ url_for('rechercher') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-search"></i> Rechercher un trajet
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
