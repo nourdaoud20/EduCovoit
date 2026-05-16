@@ -392,7 +392,7 @@ def chat(reservation_id):
     Message.query.filter_by(
         reservation_id=reservation_id, 
         lu=False
-    ).filter(Message.expediteur_id != current_user.id).update({'lu': True})
+    ).filter(Message.expediteur_id != current_user.id).update({'lu': True}, synchronize_session='fetch')
     db.session.commit()
     
     messages = Message.query.filter_by(reservation_id=reservation_id).order_by(Message.date_envoi).all()
@@ -465,31 +465,21 @@ def chats():
                 'type': 'direct',
                 'id': other_user_id,
                 'autre_participant': other_user,
-                'messages_non_lus': 0
+                'messages_non_lus': 0,
+                'last_message_date': msg.date_envoi  # Store most recent message date
             }
+        
+        # Update last message date if this message is more recent
+        if msg.date_envoi > direct_convs[other_user_id].get('last_message_date', datetime.min):
+            direct_convs[other_user_id]['last_message_date'] = msg.date_envoi
         
         if msg.expediteur_id != current_user.id and not msg.lu:
             direct_convs[other_user_id]['messages_non_lus'] += 1
     
     conversations.extend(direct_convs.values())
     
-    # Sort by most recent message - build a function to get the most recent message date
-    def get_sort_key(conv):
-        if conv.get('reservation'):
-            return conv['reservation'].date_reservation
-        else:
-            # For direct messages, find the most recent message with this user
-            other_user_id = conv['id']
-            recent_msg = Message.query.filter(
-                db.or_(
-                    db.and_(Message.expediteur_id == current_user.id, Message.destinataire_id == other_user_id),
-                    db.and_(Message.expediteur_id == other_user_id, Message.destinataire_id == current_user.id)
-                ),
-                Message.reservation_id.is_(None)
-            ).order_by(Message.date_envoi.desc()).first()
-            return recent_msg.date_envoi if recent_msg else datetime.now()
-    
-    conversations.sort(key=get_sort_key, reverse=True)
+    # Sort by most recent message
+    conversations.sort(key=lambda x: x.get('last_message_date') or x.get('reservation').date_reservation if x.get('reservation') else datetime.min, reverse=True)
     
     return render_template('chats.html', conversations=conversations)
 
@@ -509,7 +499,7 @@ def direct_chat(user_id):
         expediteur_id=user_id,
         reservation_id=None,
         lu=False
-    ).update({'lu': True})
+    ).update({'lu': True}, synchronize_session='fetch')
     db.session.commit()
     
     # Get messages between these users
@@ -590,7 +580,12 @@ def handle_send_message(data):
             return
         
         if reservation_id:
-            # Reservation-based message
+            # Reservation-based message - validate access
+            reservation = Reservation.query.get(reservation_id)
+            if not reservation or (reservation.passager_id != user.id and reservation.trajet.conducteur_id != user.id):
+                print("Accès non autorisé à cette réservation")
+                return
+            
             message = Message(
                 reservation_id=reservation_id,
                 expediteur_id=user.id,
@@ -599,11 +594,26 @@ def handle_send_message(data):
             )
             room = str(reservation_id)
         elif direct_chat_id and destinataire_id:
-            # Direct message
+            # Direct message - validate that user is authorized
+            destinataire_id = int(destinataire_id)
+            
+            # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
+            chat_ids = direct_chat_id.split('_')
+            if len(chat_ids) != 2:
+                print("Format de chat direct invalide")
+                return
+            
+            sorted_ids = sorted([int(user_id), destinataire_id])
+            expected_chat_id = f"{sorted_ids[0]}_{sorted_ids[1]}"
+            
+            if str(direct_chat_id) != expected_chat_id:
+                print("ID de chat direct invalide")
+                return
+            
             message = Message(
                 reservation_id=None,
                 expediteur_id=user.id,
-                destinataire_id=int(destinataire_id),
+                destinataire_id=destinataire_id,
                 contenu=message_content,
                 lu=False
             )
