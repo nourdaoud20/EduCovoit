@@ -13,7 +13,17 @@ app.config['SECRET_KEY'] = 'eduCovoit_secret_key_2024_tunisia'
 
 init_db(app)
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*",
+    async_mode='threading',
+    manage_session=False,
+    engineio_logger=False,
+    socketio_logger=False,
+    ping_timeout=60,
+    ping_interval=25,
+    transports=['websocket', 'polling']
+)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -555,12 +565,20 @@ def create_direct_chat_id(user_id1, user_id2):
 @socketio.on('connect')
 def handle_connect():
     """Quand un utilisateur se connecte au socket"""
-    print("✅ Nouvelle connexion Socket.IO")
+    try:
+        print(f"✅ Nouvelle connexion Socket.IO - SID: {request.sid}")
+        return True
+    except Exception as e:
+        print(f"❌ Erreur lors de la connexion Socket.IO: {e}")
+        return False
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Quand un utilisateur se déconnecte"""
-    print("❌ Déconnexion Socket.IO")
+    try:
+        print(f"❌ Déconnexion Socket.IO - SID: {request.sid}")
+    except Exception as e:
+        print(f"Erreur lors de la gestion de la déconnexion: {e}")
 
 @socketio.on('join_chat')
 def handle_join_chat(data):
