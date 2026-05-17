@@ -58,17 +58,46 @@
 </div>
 
 <script>
-    var socket = io();
+    var socket = io({
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        reconnect: true
+    });
     var reservationId = {{ reservation.id }};
     var currentUserId = {{ current_user.id }};
     
     var chatMessages = document.getElementById('chatMessages');
-    function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+    function scrollToBottom() { 
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+        }
+    }
     scrollToBottom();
     
     socket.on('connect', function() { 
         console.log('✅ Socket connecté'); 
         socket.emit('join_chat', { reservation_id: reservationId }); 
+    });
+    
+    socket.on('connect_error', function(error) {
+        console.error('❌ Erreur de connexion Socket.IO:', error);
+    });
+    
+    socket.on('error', function(data) {
+        console.error('❌ Erreur Socket.IO:', data);
+        if (data && data.message) {
+            alert('Erreur: ' + data.message);
+        }
+    });
+    
+    socket.on('disconnect', function(reason) {
+        console.log('⚠️ Socket déconnecté:', reason);
+    });
+    
+    socket.on('chat_joined', function(data) {
+        console.log('✅ Chat rejoint:', data);
     });
     
     socket.on('new_message', function(data) {
@@ -83,7 +112,17 @@
     function sendMessage() {
         var message = document.getElementById('messageInput').value.trim();
         if (message === '') return;
-        socket.emit('send_message', { reservation_id: reservationId, message: message, user_id: currentUserId });
+        
+        if (!socket.connected) {
+            alert('Connexion perdue. Veuillez rafraîchir la page.');
+            return;
+        }
+        
+        socket.emit('send_message', { 
+            reservation_id: reservationId, 
+            message: message, 
+            user_id: currentUserId 
+        });
         document.getElementById('messageInput').value = '';
     }
     
@@ -92,6 +131,10 @@
     
     function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
     
-    window.onbeforeunload = function() { socket.emit('leave_chat', { reservation_id: reservationId }); };
+    window.onbeforeunload = function() { 
+        if (socket && socket.connected) {
+            socket.emit('leave_chat', { reservation_id: reservationId }); 
+        }
+    };
 </script>
 {% endblock %}

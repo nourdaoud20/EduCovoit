@@ -13,7 +13,17 @@ app.config['SECRET_KEY'] = 'eduCovoit_secret_key_2024_tunisia'
 
 init_db(app)
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Configure Socket.IO with proper CORS and async mode
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*", 
+    async_mode='threading',
+    manage_session=False,  # Let Flask-Login manage the session
+    ping_timeout=60,
+    ping_interval=25,
+    logger=True,
+    engineio_logger=True
+)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -555,61 +565,115 @@ def create_direct_chat_id(user_id1, user_id2):
 @socketio.on('connect')
 def handle_connect():
     """Quand un utilisateur se connecte au socket"""
-    print("✅ Nouvelle connexion Socket.IO")
+    if current_user.is_authenticated:
+        print(f"✅ Nouvelle connexion Socket.IO - Utilisateur: {current_user.nom}")
+    else:
+        print("❌ Tentative de connexion Socket.IO non authentifiée")
+        return False  # Reject the connection if user is not authenticated
 
 @socketio.on('disconnect')
 def handle_disconnect():
     """Quand un utilisateur se déconnecte"""
-    print("❌ Déconnexion Socket.IO")
+    if current_user.is_authenticated:
+        print(f"👋 Déconnexion Socket.IO - Utilisateur: {current_user.nom}")
+    else:
+        print("❌ Déconnexion Socket.IO (non authentifié)")
 
 @socketio.on('join_chat')
 def handle_join_chat(data):
     """Rejoindre une room de chat"""
     try:
+        if not current_user.is_authenticated:
+            emit('error', {'message': 'Non authentifié'})
+            return
+        
         reservation_id = data.get('reservation_id')
         direct_chat_id = data.get('direct_chat_id')  # Format: "user1_user2" (sorted)
         
         if reservation_id:
+            # Validate user has access to this reservation
+            reservation = Reservation.query.get(reservation_id)
+            if not reservation:
+                emit('error', {'message': 'Réservation non trouvée'})
+                return
+            
+            if reservation.passager_id != current_user.id and reservation.trajet.conducteur_id != current_user.id:
+                emit('error', {'message': 'Accès non autorisé à cette réservation'})
+                return
+            
             join_room(str(reservation_id))
-            print(f"📢 Un utilisateur a rejoint le chat {reservation_id}")
+            print(f"📢 {current_user.nom} a rejoint le chat {reservation_id}")
+            emit('chat_joined', {'message': f'{current_user.nom} a rejoint le chat'}, room=str(reservation_id))
+            
         elif direct_chat_id:
+            # Validate direct chat ID
+            chat_ids = direct_chat_id.split('_')
+            if len(chat_ids) != 2:
+                emit('error', {'message': 'Format de chat direct invalide'})
+                return
+            
+            try:
+                chat_id_list = [int(id_str) for id_str in chat_ids]
+            except ValueError:
+                emit('error', {'message': 'Format des IDs de chat invalide'})
+                return
+            
+            if current_user.id not in chat_id_list:
+                emit('error', {'message': 'Utilisateur non autorisé pour ce chat'})
+                return
+            
             join_room(str(direct_chat_id))
-            print(f"📢 Un utilisateur a rejoint le chat direct {direct_chat_id}")
+            print(f"📢 {current_user.nom} a rejoint le chat direct {direct_chat_id}")
+            emit('chat_joined', {'message': f'{current_user.nom} a rejoint le chat'}, room=str(direct_chat_id))
+        else:
+            emit('error', {'message': 'Mode de chat invalide'})
+            
     except Exception as e:
         print(f"Erreur join_chat: {e}")
+        emit('error', {'message': f'Erreur: {str(e)}'})
 
 @socketio.on('send_message')
 def handle_send_message(data):
     """Envoyer un message dans le chat"""
     try:
+        if not current_user.is_authenticated:
+            emit('error', {'message': 'Non authentifié'})
+            return
+        
         reservation_id = data.get('reservation_id')
         direct_chat_id = data.get('direct_chat_id')
         message_content = data.get('message', '').strip()
         user_id = data.get('user_id')
         destinataire_id = data.get('destinataire_id')  # For direct messages
         
-        if not message_content or not user_id:
-            print("Message ou user_id manquant")
+        # Verify the request is coming from the authenticated user
+        if int(user_id) != current_user.id:
+            print(f"Tentative d'envoi de message avec un user_id différent: {user_id} vs {current_user.id}")
+            emit('error', {'message': 'Utilisateur non autorisé'})
+            return
+        
+        if not message_content:
+            emit('error', {'message': 'Message vide'})
             return
         
         if len(message_content) > 500:
             message_content = message_content[:500]
         
-        user = Utilisateur.query.get(int(user_id))
-        if not user:
-            print("Utilisateur non trouvé")
-            return
-        
         if reservation_id:
             # Reservation-based message - validate access
             reservation = Reservation.query.get(reservation_id)
-            if not reservation or (reservation.passager_id != user.id and reservation.trajet.conducteur_id != user.id):
-                print("Accès non autorisé à cette réservation")
+            if not reservation:
+                emit('error', {'message': 'Réservation non trouvée'})
+                return
+            
+            if reservation.passager_id != current_user.id and reservation.trajet.conducteur_id != current_user.id:
+                print(f"Accès non autorisé à la réservation {reservation_id}")
+                emit('error', {'message': 'Accès non autorisé à cette réservation'})
                 return
             
             message = Message(
                 reservation_id=reservation_id,
-                expediteur_id=user.id,
+                expediteur_id=current_user.id,
                 contenu=message_content,
                 lu=False
             )
@@ -621,12 +685,14 @@ def handle_send_message(data):
                 destinataire_id_int = int(destinataire_id)
             except (ValueError, TypeError):
                 print("destinataire_id invalide")
+                emit('error', {'message': 'ID destinataire invalide'})
                 return
             
             # Validate direct_chat_id format (should be "id1_id2" with sorted IDs)
             chat_ids = direct_chat_id.split('_')
             if len(chat_ids) != 2:
                 print("Format de chat direct invalide (attendu: user_id1_user_id2)")
+                emit('error', {'message': 'Format de chat direct invalide'})
                 return
             
             # Parse chat IDs and verify user is a participant
@@ -634,21 +700,24 @@ def handle_send_message(data):
                 chat_id_list = [int(id_str) for id_str in chat_ids]
             except ValueError:
                 print("Format des IDs de chat invalide")
+                emit('error', {'message': 'Format des IDs de chat invalide'})
                 return
             
-            if user.id not in chat_id_list or destinataire_id_int not in chat_id_list:
+            if current_user.id not in chat_id_list or destinataire_id_int not in chat_id_list:
                 print("Utilisateur non autorisé pour ce chat")
+                emit('error', {'message': 'Utilisateur non autorisé pour ce chat'})
                 return
             
-            expected_chat_id = create_direct_chat_id(user.id, destinataire_id_int)
+            expected_chat_id = create_direct_chat_id(current_user.id, destinataire_id_int)
             
             if direct_chat_id != expected_chat_id:
                 print("ID de chat direct invalide")
+                emit('error', {'message': 'ID de chat direct invalide'})
                 return
             
             message = Message(
                 reservation_id=None,
-                expediteur_id=user.id,
+                expediteur_id=current_user.id,
                 destinataire_id=destinataire_id_int,
                 contenu=message_content,
                 lu=False
@@ -656,38 +725,43 @@ def handle_send_message(data):
             room = str(direct_chat_id)
         else:
             print("Mode de chat invalide")
+            emit('error', {'message': 'Mode de chat invalide'})
             return
         
         db.session.add(message)
         db.session.commit()
         
         message_data = {
-            'expediteur_id': user.id,
-            'expediteur_nom': user.nom,
+            'expediteur_id': current_user.id,
+            'expediteur_nom': current_user.nom,
             'contenu': message_content,
             'date_envoi': datetime.now().strftime('%H:%M')
         }
         
         emit('new_message', message_data, room=room)
-        print(f"💬 Message de {user.nom}: {message_content[:50]}")
+        print(f"💬 Message de {current_user.nom}: {message_content[:50]}")
         
     except Exception as e:
         print(f"❌ Erreur send_message: {e}")
         db.session.rollback()
+        emit('error', {'message': f'Erreur lors de l\'envoi du message: {str(e)}'})
 
 @socketio.on('leave_chat')
 def handle_leave_chat(data):
     """Quitter une room de chat"""
     try:
+        if not current_user.is_authenticated:
+            return
+        
         reservation_id = data.get('reservation_id')
         direct_chat_id = data.get('direct_chat_id')
         
         if reservation_id:
             leave_room(str(reservation_id))
-            print(f"👋 Utilisateur a quitté le chat {reservation_id}")
+            print(f"👋 {current_user.nom} a quitté le chat {reservation_id}")
         elif direct_chat_id:
             leave_room(str(direct_chat_id))
-            print(f"👋 Utilisateur a quitté le chat direct {direct_chat_id}")
+            print(f"👋 {current_user.nom} a quitté le chat direct {direct_chat_id}")
     except Exception as e:
         print(f"Erreur leave_chat: {e}")
 
