@@ -58,17 +58,38 @@
 </div>
 
 <script>
-    var socket = io();
+    var socket = io({
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: Infinity,
+        transports: ['websocket', 'polling']
+    });
+    
     var reservationId = {{ reservation.id }};
     var currentUserId = {{ current_user.id }};
+    var connectionStatus = false;
     
     var chatMessages = document.getElementById('chatMessages');
     function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
     scrollToBottom();
     
     socket.on('connect', function() { 
+        connectionStatus = true;
         console.log('✅ Socket connecté'); 
+        document.getElementById('sendBtn').disabled = false;
         socket.emit('join_chat', { reservation_id: reservationId }); 
+    });
+    
+    socket.on('disconnect', function() {
+        connectionStatus = false;
+        console.log('❌ Socket déconnecté, tentative de reconnexion...');
+        document.getElementById('sendBtn').disabled = true;
+    });
+    
+    socket.on('connect_error', function(error) {
+        console.error('Erreur de connexion Socket.IO:', error);
+        document.getElementById('sendBtn').disabled = true;
     });
     
     socket.on('new_message', function(data) {
@@ -83,6 +104,10 @@
     function sendMessage() {
         var message = document.getElementById('messageInput').value.trim();
         if (message === '') return;
+        if (!connectionStatus) {
+            alert('Connexion perdue. Veuillez attendre la reconnexion...');
+            return;
+        }
         socket.emit('send_message', { reservation_id: reservationId, message: message, user_id: currentUserId });
         document.getElementById('messageInput').value = '';
     }

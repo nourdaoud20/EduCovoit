@@ -8,7 +8,13 @@ let socket = null;
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Socket.IO if available
     if (typeof io !== 'undefined') {
-        socket = io();
+        socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: Infinity,
+            transports: ['websocket', 'polling']
+        });
         setupSocketListeners();
     }
     
@@ -30,6 +36,23 @@ document.addEventListener('DOMContentLoaded', function() {
    ============================================ */
 
 function setupSocketListeners() {
+    // Connection events
+    socket.on('connect', function() {
+        console.log('✅ Socket.IO connected');
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('❌ Socket.IO disconnected, attempting to reconnect...');
+    });
+    
+    socket.on('connect_error', function(error) {
+        console.error('Socket.IO connection error:', error);
+    });
+    
+    socket.on('error', function(error) {
+        console.error('Socket.IO error:', error);
+    });
+    
     // Listen for chat notifications
     socket.on('chat_notification', function(data) {
         showNotification('message', `${data.expediteur_nom} vous a envoyé un message`, data.message_court);

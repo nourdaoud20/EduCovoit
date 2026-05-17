@@ -56,18 +56,39 @@
 </div>
 
 <script>
-    var socket = io();
+    var socket = io({
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: Infinity,
+        transports: ['websocket', 'polling']
+    });
+    
     var directChatId = {{ direct_chat_id|tojson }};
     var currentUserId = {{ current_user.id }};
     var destinataireId = {{ autre_participant.id }};
+    var connectionStatus = false;
     
     var chatMessages = document.getElementById('chatMessages');
     function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
     scrollToBottom();
     
     socket.on('connect', function() { 
+        connectionStatus = true;
         console.log('✅ Socket connecté'); 
+        document.getElementById('sendBtn').disabled = false;
         socket.emit('join_chat', { direct_chat_id: directChatId }); 
+    });
+    
+    socket.on('disconnect', function() {
+        connectionStatus = false;
+        console.log('❌ Socket déconnecté, tentative de reconnexion...');
+        document.getElementById('sendBtn').disabled = true;
+    });
+    
+    socket.on('connect_error', function(error) {
+        console.error('Erreur de connexion Socket.IO:', error);
+        document.getElementById('sendBtn').disabled = true;
     });
     
     socket.on('new_message', function(data) {
@@ -82,6 +103,10 @@
     function sendMessage() {
         var message = document.getElementById('messageInput').value.trim();
         if (message === '') return;
+        if (!connectionStatus) {
+            alert('Connexion perdue. Veuillez attendre la reconnexion...');
+            return;
+        }
         socket.emit('send_message', { 
             direct_chat_id: directChatId, 
             message: message, 
