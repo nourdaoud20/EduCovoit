@@ -57,66 +57,73 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block page_scripts %}
 <script>
-    var socket = io({
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        reconnectionAttempts: Infinity,
-        transports: ['websocket', 'polling']
-    });
-    
-    var reservationId = {{ reservation.id }};
-    var currentUserId = {{ current_user.id }};
-    var connectionStatus = false;
-    
-    var chatMessages = document.getElementById('chatMessages');
-    function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
-    scrollToBottom();
-    
-    socket.on('connect', function() { 
-        connectionStatus = true;
-        console.log('✅ Socket connecté'); 
-        document.getElementById('sendBtn').disabled = false;
-        socket.emit('join_chat', { reservation_id: reservationId }); 
-    });
-    
-    socket.on('disconnect', function() {
-        connectionStatus = false;
-        console.log('❌ Socket déconnecté, tentative de reconnexion...');
-        document.getElementById('sendBtn').disabled = true;
-    });
-    
-    socket.on('connect_error', function(error) {
-        console.error('Erreur de connexion Socket.IO:', error);
-        document.getElementById('sendBtn').disabled = true;
-    });
-    
-    socket.on('new_message', function(data) {
-        var isMe = (data.expediteur_id === currentUserId);
-        var msgDiv = document.createElement('div');
-        msgDiv.className = 'd-flex mb-3 ' + (isMe ? 'justify-content-end' : 'justify-content-start');
-        msgDiv.innerHTML = `<div class="message-bubble ${isMe ? 'message-mine' : 'message-other'}" style="max-width: 70%; word-wrap: break-word;"><small style="opacity: 0.9;"><strong>${escapeHtml(data.expediteur_nom)}</strong></small><p style="margin: 0.5rem 0 0 0; margin-bottom: 0;">${escapeHtml(data.contenu)}</p><small style="opacity: 0.7; display: block; margin-top: 0.5rem;">${data.date_envoi}</small></div>`;
-        chatMessages.appendChild(msgDiv);
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatSocket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: Infinity,
+            transports: ['websocket', 'polling']
+        });
+        
+        const reservationId = {{ reservation.id }};
+        const currentUserId = {{ current_user.id }};
+        let connectionStatus = false;
+        
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
         scrollToBottom();
-    });
-    
-    function sendMessage() {
-        var message = document.getElementById('messageInput').value.trim();
-        if (message === '') return;
-        if (!connectionStatus) {
-            alert('Connexion perdue. Veuillez attendre la reconnexion...');
-            return;
+        
+        chatSocket.on('connect', function() { 
+            connectionStatus = true;
+            sendBtn.disabled = false;
+            chatSocket.emit('join_chat', { reservation_id: reservationId }); 
+        });
+        
+        chatSocket.on('disconnect', function() {
+            connectionStatus = false;
+            sendBtn.disabled = true;
+        });
+        
+        chatSocket.on('connect_error', function() {
+            sendBtn.disabled = true;
+        });
+        
+        chatSocket.on('new_message', function(data) {
+            const isMe = (data.expediteur_id === currentUserId);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'd-flex mb-3 ' + (isMe ? 'justify-content-end' : 'justify-content-start');
+            msgDiv.innerHTML = `<div class="message-bubble ${isMe ? 'message-mine' : 'message-other'}" style="max-width: 70%; word-wrap: break-word;"><small style="opacity: 0.9;"><strong>${escapeHtml(data.expediteur_nom)}</strong></small><p style="margin: 0.5rem 0 0 0; margin-bottom: 0;">${escapeHtml(data.contenu)}</p><small style="opacity: 0.7; display: block; margin-top: 0.5rem;">${data.date_envoi}</small></div>`;
+            chatMessages.appendChild(msgDiv);
+            scrollToBottom();
+        });
+        
+        function sendChatMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            if (!connectionStatus) {
+                alert('Connexion perdue. Veuillez attendre la reconnexion...');
+                return;
+            }
+            chatSocket.emit('send_message', { reservation_id: reservationId, message: message, user_id: currentUserId });
+            messageInput.value = '';
         }
-        socket.emit('send_message', { reservation_id: reservationId, message: message, user_id: currentUserId });
-        document.getElementById('messageInput').value = '';
-    }
-    
-    document.getElementById('sendBtn').onclick = sendMessage;
-    document.getElementById('messageInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
-    
-    function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-    
-    window.onbeforeunload = function() { socket.emit('leave_chat', { reservation_id: reservationId }); };
+        
+        sendBtn.addEventListener('click', sendChatMessage);
+        messageInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') sendChatMessage(); });
+        
+        window.addEventListener('beforeunload', function() {
+            chatSocket.emit('leave_chat', { reservation_id: reservationId });
+        });
+    });
 </script>
 {% endblock %}
